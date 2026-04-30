@@ -90,12 +90,12 @@ export default function Infos() {
         <h2 className="font-display text-2xl md:text-3xl text-[#FDFBF7] mb-6">Tes questions, nos réponses.</h2>
 
         <Accordion type="single" collapsible className="space-y-2" data-testid="faq-accordion">
-          {FAQS.map((item, i) => (
+          {FAQS.map((item) => (
             <AccordionItem
-              key={i}
-              value={`faq-${i}`}
+              key={item.q}
+              value={`faq-${item.q}`}
               className="border border-white/5 rounded-xl bg-[#141010] hover:border-[#D4AF37]/25 transition-colors data-[state=open]:border-[#D4AF37]/40 data-[state=open]:bg-[#1A1515] px-5"
-              data-testid={`faq-item-${i}`}
+              data-testid={`faq-item-${FAQS.indexOf(item)}`}
             >
               <AccordionTrigger className="text-left text-[#FDFBF7] hover:text-[#D4AF37] hover:no-underline py-5 font-display text-base md:text-lg">
                 {item.q}

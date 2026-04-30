@@ -55,7 +55,7 @@ export default function ProductDetail() {
           <div className="flex gap-3">
             {product.images.map((img, i) => (
               <button
-                key={i}
+                key={img}
                 onClick={() => setActiveImage(i)}
                 data-testid={`product-thumb-${i}`}
                 className={`flex-1 aspect-square rounded-lg overflow-hidden border transition-all ${

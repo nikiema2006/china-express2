@@ -14,14 +14,16 @@ export default function Catalog() {
   const [sort, setSort] = useState("featured");
 
   useEffect(() => {
-    if (activeCat === "all") {
-      searchParams.delete("cat");
-    } else {
-      searchParams.set("cat", activeCat);
-    }
-    setSearchParams(searchParams, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCat]);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (activeCat === "all") next.delete("cat");
+        else next.set("cat", activeCat);
+        return next;
+      },
+      { replace: true }
+    );
+  }, [activeCat, setSearchParams]);
 
   const products = useMemo(() => {
     let list = activeCat === "all" ? PRODUCTS : PRODUCTS.filter((p) => p.category === activeCat);

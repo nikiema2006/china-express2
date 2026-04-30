@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, TrendingUp, Sparkles } from "lucide-react";
@@ -6,11 +6,11 @@ import { getTrendingProducts } from "../../data/products";
 import { formatXOF } from "../../lib/format";
 
 export default function HeroCarousel() {
-  const slides = getTrendingProducts().slice(0, 4);
+  const slides = useMemo(() => getTrendingProducts().slice(0, 4), []);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setIndex((i) => (i + 1) % slides.length), 5500);
+    const id = setInterval(() => setIndex((prev) => (prev + 1) % slides.length), 5500);
     return () => clearInterval(id);
   }, [slides.length]);
 

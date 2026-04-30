@@ -16,7 +16,7 @@ export default function ProfitCalculator({ product }) {
   useEffect(() => {
     setQuantity(product.minWholesale || 10);
     setSellPrice(product.suggestedSellPrice);
-  }, [product.id]);
+  }, [product.id, product.minWholesale, product.suggestedSellPrice]);
 
   const transport = SHIPPING_OPTIONS.find((s) => s.id === transportId);
 
@@ -132,18 +132,18 @@ export default function ProfitCalculator({ product }) {
               className="w-full bg-[#1A1515] border border-[#D4AF37]/25 rounded-lg px-4 py-3 font-mono text-lg text-[#FDFBF7] focus:border-[#D4AF37] focus:outline-none transition-colors"
             />
             <div className="flex gap-2 mt-2 flex-wrap">
-              {[product.minRetail, product.minWholesale, product.minWholesale * 2, product.minWholesale * 5].map(
-                (q, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setQuantity(q)}
-                    data-testid={`calc-qty-preset-${q}`}
-                    className="text-[11px] px-2.5 py-1 rounded-md border border-white/10 text-[#A19D98] hover:border-[#D4AF37]/40 hover:text-[#D4AF37] transition-colors"
-                  >
-                    {q}
-                  </button>
-                )
-              )}
+              {Array.from(
+                new Set([product.minRetail, product.minWholesale, product.minWholesale * 2, product.minWholesale * 5])
+              ).map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setQuantity(q)}
+                  data-testid={`calc-qty-preset-${q}`}
+                  className="text-[11px] px-2.5 py-1 rounded-md border border-white/10 text-[#A19D98] hover:border-[#D4AF37]/40 hover:text-[#D4AF37] transition-colors"
+                >
+                  {q}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -223,8 +223,8 @@ export default function ProfitCalculator({ product }) {
                   formatter={(v) => formatXOF(v)}
                 />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {chartData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+                  {chartData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
