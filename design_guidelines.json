@@ -1,0 +1,122 @@
+{
+  "project_name": "China Express (中国速运) E-Commerce & Business Marketplace",
+  "theme": "dark",
+  "archetype": "Archetype 5 (Jewel & Luxury)",
+  "design_philosophy": "A mobile-first, premium hybrid e-commerce platform serving as both a luxury marketplace and a serious business tool. The UI blends traditional Chinese elegance (Imperial Red, Gold, Phoenix motifs) with modern, high-contrast dark-mode analytics panels. It must feel like an exclusive business portal, not a generic mass-market app.",
+  "typography": {
+    "heading_font": "Playfair Display",
+    "body_font": "Outfit",
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl tracking-tight font-bold",
+      "h2": "text-2xl sm:text-3xl tracking-tight font-semibold",
+      "h3": "text-xl font-medium",
+      "body": "text-base leading-relaxed",
+      "small_labels": "text-xs uppercase tracking-[0.2em] font-medium",
+      "numbers_data": "font-mono text-lg font-semibold tracking-tight"
+    },
+    "notes": "Use Playfair Display for marketing headings, product titles, and hero sections. Use Outfit for all body text, calculator inputs, charts, and UI elements. Numbers in the profit calculator must be highly legible and strictly formatted in XOF (FCFA)."
+  },
+  "colors": {
+    "background": {
+      "base": "#0A0A0A",
+      "surface": "#141010",
+      "surface_elevated": "#1A1515"
+    },
+    "brand": {
+      "primary": "#C8102E",
+      "primary_hover": "#A60D26",
+      "gold": "#D4AF37",
+      "gold_muted": "#AA8C2C"
+    },
+    "text": {
+      "primary": "#FDFBF7",
+      "secondary": "#A19D98",
+      "muted": "#75716C",
+      "inverse": "#0A0A0A"
+    },
+    "borders": {
+      "subtle": "rgba(212, 175, 55, 0.15)",
+      "focus": "rgba(212, 175, 55, 0.5)"
+    },
+    "status": {
+      "success": "#2E7D32",
+      "warning": "#F57F17",
+      "error": "#D32F2F"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing Philosophy. Use 2x standard padding.",
+    "containers": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid_mobile": "grid-cols-2 gap-4",
+    "grid_desktop": "grid-cols-4 lg:grid-cols-12 gap-8 bento-style",
+    "cards": "rounded-xl border border-white/5 bg-[#141010] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+    "bottom_nav": "fixed bottom-0 w-full z-50 h-16 backdrop-blur-xl bg-[#0A0A0A]/85 border-t border-[#D4AF37]/20 flex justify-around items-center pb-safe"
+  },
+  "surfaces_and_effects": {
+    "glassmorphism": "backdrop-blur-xl bg-[#0A0A0A]/60 border border-[#D4AF37]/20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]",
+    "hero_overlay": "bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-transparent",
+    "glow": "drop-shadow-[0_0_12px_rgba(200,16,46,0.3)]",
+    "borders": "1px solid rgba(253, 251, 247, 0.08)"
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-gradient-to-r from-[#C8102E] to-[#A60D26] text-[#FDFBF7] rounded-none md:rounded-md px-8 py-3 font-semibold hover:brightness-110 transition-all shadow-[0_0_15px_rgba(200,16,46,0.4)]",
+      "secondary": "bg-transparent border border-[#D4AF37] text-[#D4AF37] rounded-none md:rounded-md px-8 py-3 font-semibold hover:bg-[#D4AF37]/10 transition-all",
+      "tab_active": "text-[#D4AF37] flex flex-col items-center",
+      "tab_inactive": "text-[#A19D98] flex flex-col items-center hover:text-[#FDFBF7] transition-colors"
+    },
+    "profit_calculator": {
+      "style": "Technical glassmorphism. Deep dark background with glowing gold accents for inputs.",
+      "inputs": "Shadcn standard inputs customized with bg-[#1A1515] border-[#D4AF37]/30 text-[#FDFBF7] focus:ring-1 focus:ring-[#D4AF37]",
+      "chart": "Recharts responsive container. Use #D4AF37 for Profit line/bar, #C8102E for Costs. Hide generic cartesian grids, use subtle dotted lines."
+    },
+    "product_card": {
+      "style": "Flat solid dark grey card, minimal border, image max-h-[200px] object-cover rounded-t-xl.",
+      "badges": "Absolute positioned. 'Top Vente' in Gold bg text-black. 'Promo' in Imperial Red bg text-white."
+    },
+    "tracking_timeline": {
+      "style": "Vertical stepper. Completed steps have a glowing Gold (#D4AF37) node and border. Pending steps have a muted grey (#A19D98) node."
+    },
+    "video_reels": {
+      "container": "flex overflow-x-auto snap-x snap-mandatory gap-4 scrollbar-hide py-4",
+      "item": "snap-center shrink-0 w-[280px] h-[500px] bg-black rounded-xl relative overflow-hidden"
+    }
+  },
+  "icons": {
+    "library": "lucide-react",
+    "usage": "Use stroke-width 1.5. Ensure icons in the bottom nav are 24px."
+  },
+  "media": {
+    "logos": {
+      "brand_logo": "https://customer-assets.emergentagent.com/job_china-africa-trade-1/artifacts/gm0lbsx0_logochinaexpress-removebg-preview.png",
+      "brand_poster": "https://customer-assets.emergentagent.com/job_china-africa-trade-1/artifacts/5oflnbmr_affichechinaexpress.jpg"
+    },
+    "backgrounds": {
+      "phoenix_motif": "https://static.prod-images.emergentagent.com/jobs/6a00e52e-54f6-4243-8653-212a9cc342d8/images/4d9b93adc947c1267d150b7bb69268b7434b4a55c888f937696cb7b067fe5280.png"
+    },
+    "hero_images": {
+      "logistics_hero": "https://static.prod-images.emergentagent.com/jobs/6a00e52e-54f6-4243-8653-212a9cc342d8/images/6d7e99ecff9c28c98c6c578ed79ca0fa95cdd120ed5b9978d49aa40f8d34dfba.png",
+      "cargo_ship": "https://images.unsplash.com/photo-1632517306067-b54ab4d1f98d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwyfHxjYXJnbyUyMHNoaXAlMjBvY2VhbiUyMGNvbnRhaW5lcnxlbnwwfHx8fDE3Nzc1Mzk0Mzd8MA&ixlib=rb-4.1.0&q=85"
+    },
+    "products": {
+      "tech_gadget_1": "https://static.prod-images.emergentagent.com/jobs/6a00e52e-54f6-4243-8653-212a9cc342d8/images/7825735ca1608fd128921593344c73e0525e5588c61adc2496ab45da46a7f316.png",
+      "tech_gadget_2": "https://images.unsplash.com/photo-1717996563514-e3519f9ef9f7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzB8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBnYWRnZXRzJTIwZWxlY3Ryb25pY3N8ZW58MHx8fHwxNzc3NTM5NDM3fDA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "accessibility_and_interactions": {
+    "hover_states": "All interactive elements must change brightness or add a subtle glow. Text color must be explicitly defined on hover.",
+    "focus": "focus-visible:ring-2 focus-visible:ring-[#D4AF37] focus-visible:outline-none",
+    "animations": "Use Framer Motion for page transitions. Staggered fade-up for product grids. Smooth spring animations for the profit calculator chart updates."
+  },
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' and 'recharts' if not present.",
+    "Ensure the UI defaults to dark mode completely. Do not implement a light mode toggle.",
+    "The Profit Calculator must calculate 'Coût Total' (Product cost + Shipping cost), 'Revenu' (Local sell price * Quantity), and 'Marge/Profit' (Revenu - Coût Total). Graph it dynamically with Recharts.",
+    "Shipping inputs should allow switching between 'Maritime', 'Aérien Standard', and 'Aérien Express', dynamically changing the cost variable.",
+    "All prices must be displayed in XOF (FCFA) using standard French formatting (e.g., 15 000 FCFA).",
+    "Add 'data-testid' to all buttons, calculator inputs, and navigation links.",
+    "Implement the bottom tab bar explicitly on mobile (<md breakpoints) and hide it on desktop, replacing it with a side navigation or standard top nav.",
+    "Integrate the 'phoenix_motif' background image subtly in the hero section or page wrappers with a low opacity (e.g., 5-10%).",
+    "Use the provided brand_logo in the Header and Navigation."
+  ]
+}
