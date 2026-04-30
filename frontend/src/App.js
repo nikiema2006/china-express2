@@ -33,13 +33,13 @@ function App() {
           </Routes>
         </Layout>
         <Toaster
-          theme="dark"
+          theme="light"
           position="top-right"
           toastOptions={{
             style: {
-              background: "#141010",
-              border: "1px solid rgba(212, 175, 55, 0.3)",
-              color: "#FDFBF7",
+              background: "#FFFFFF",
+              border: "1px solid rgba(184, 148, 30, 0.3)",
+              color: "#1A1515",
             },
           }}
         />

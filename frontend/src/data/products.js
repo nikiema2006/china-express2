@@ -308,7 +308,7 @@ export const SHIPPING_OPTIONS = [
     pricePerKg: 4800,
     estimatedDays: "12-18 jours",
     description: "Bon équilibre prix / délai.",
-    color: "#D4AF37",
+    color: "#B8941E",
   },
   {
     id: "aerien_express",

@@ -10,11 +10,11 @@ export default function Infos() {
     <div data-testid="infos-page" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-14">
       {/* Hero */}
       <div className="text-center mb-12 md:mb-20">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] mb-3">Comment ça marche</p>
-        <h1 className="font-display text-3xl md:text-5xl text-[#FDFBF7] mb-4 leading-tight">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-3">Comment ça marche</p>
+        <h1 className="font-display text-3xl md:text-5xl text-[#1A1515] mb-4 leading-tight">
           De ton lien Alibaba à <span className="text-gold-gradient">ton colis livré.</span>
         </h1>
-        <p className="text-sm md:text-base text-[#A19D98] max-w-2xl mx-auto leading-relaxed">
+        <p className="text-sm md:text-base text-[#5C5854] max-w-2xl mx-auto leading-relaxed">
           China Express est né d'un constat simple : pourquoi payer 3× plus cher ce qui coûte 3× moins à la source ? On est le pont entre les usines chinoises et ton business en Afrique. Plus d'arnaque, plus de "désolé c'est cassé".
         </p>
       </div>
@@ -31,14 +31,14 @@ export default function Infos() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 data-testid={`how-step-${step.step}`}
-                className="relative rounded-2xl bg-[#141010] border border-white/5 p-6 hover:border-[#D4AF37]/30 transition-all"
+                className="relative rounded-2xl bg-[#FFFFFF] border border-[#1A1515]/8 p-6 hover:border-[#B8941E]/30 transition-all"
               >
-                <div className="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#AA8C2C] flex items-center justify-center text-[#0A0A0A] font-display font-bold text-lg shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                <div className="absolute -top-3 -left-3 w-12 h-12 rounded-full bg-gradient-to-br from-[#B8941E] to-[#8C6E15] flex items-center justify-center text-[#FDFBF7] font-display font-bold text-lg shadow-[0_0_20px_rgba(212,175,55,0.3)]">
                   {step.step}
                 </div>
-                <Icon size={28} className="text-[#D4AF37] mb-4 mt-2" strokeWidth={1.5} />
-                <h3 className="font-display text-xl text-[#FDFBF7] mb-2">{step.title}</h3>
-                <p className="text-sm text-[#A19D98] leading-relaxed">{step.description}</p>
+                <Icon size={28} className="text-[#B8941E] mb-4 mt-2" strokeWidth={1.5} />
+                <h3 className="font-display text-xl text-[#1A1515] mb-2">{step.title}</h3>
+                <p className="text-sm text-[#5C5854] leading-relaxed">{step.description}</p>
               </motion.div>
             );
           })}
@@ -46,38 +46,38 @@ export default function Infos() {
       </section>
 
       {/* Transport comparison */}
-      <section className="mb-16 md:mb-24 rounded-2xl bg-gradient-to-br from-[#141010] to-[#0F0C0C] border border-[#D4AF37]/15 p-6 md:p-10">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] mb-2">Modes d'expédition</p>
-        <h2 className="font-display text-2xl md:text-3xl text-[#FDFBF7] mb-6">Comparatif transport</h2>
+      <section className="mb-16 md:mb-24 rounded-2xl bg-gradient-to-br from-[#FFFFFF] to-[#F9F4EA] border border-[#B8941E]/15 p-6 md:p-10">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-2">Modes d'expédition</p>
+        <h2 className="font-display text-2xl md:text-3xl text-[#1A1515] mb-6">Comparatif transport</h2>
 
         <div className="overflow-x-auto -mx-2">
           <table className="w-full text-sm min-w-[600px]">
             <thead>
-              <tr className="border-b border-[#D4AF37]/15 text-[#A19D98]">
+              <tr className="border-b border-[#B8941E]/15 text-[#5C5854]">
                 <th className="text-left py-3 px-3 font-medium uppercase tracking-wider text-[10px]">Type</th>
                 <th className="text-left py-3 px-3 font-medium uppercase tracking-wider text-[10px]">Délai</th>
                 <th className="text-left py-3 px-3 font-medium uppercase tracking-wider text-[10px]">Tarif</th>
                 <th className="text-left py-3 px-3 font-medium uppercase tracking-wider text-[10px]">Idéal pour</th>
               </tr>
             </thead>
-            <tbody className="text-[#FDFBF7]">
-              <tr className="border-b border-white/5">
+            <tbody className="text-[#1A1515]">
+              <tr className="border-b border-[#1A1515]/8">
                 <td className="py-4 px-3 font-display">Maritime</td>
                 <td className="py-4 px-3 font-mono">35–50 jours</td>
-                <td className="py-4 px-3 font-mono text-[#5DBA67]">1 200 FCFA / kg</td>
-                <td className="py-4 px-3 text-[#A19D98]">Gros volumes, meubles, conteneurs</td>
+                <td className="py-4 px-3 font-mono text-[#1F6B23]">1 200 FCFA / kg</td>
+                <td className="py-4 px-3 text-[#5C5854]">Gros volumes, meubles, conteneurs</td>
               </tr>
-              <tr className="border-b border-white/5 bg-[#D4AF37]/5">
-                <td className="py-4 px-3 font-display text-[#D4AF37]">Aérien Standard ★</td>
+              <tr className="border-b border-[#1A1515]/8 bg-[#B8941E]/5">
+                <td className="py-4 px-3 font-display text-[#B8941E]">Aérien Standard ★</td>
                 <td className="py-4 px-3 font-mono">12–18 jours</td>
-                <td className="py-4 px-3 font-mono text-[#D4AF37]">4 800 FCFA / kg</td>
-                <td className="py-4 px-3 text-[#A19D98]">Le bon compromis pour la majorité des commandes</td>
+                <td className="py-4 px-3 font-mono text-[#B8941E]">4 800 FCFA / kg</td>
+                <td className="py-4 px-3 text-[#5C5854]">Le bon compromis pour la majorité des commandes</td>
               </tr>
               <tr>
                 <td className="py-4 px-3 font-display">Aérien Express</td>
                 <td className="py-4 px-3 font-mono">5–8 jours</td>
-                <td className="py-4 px-3 font-mono text-[#FF6B6B]">7 500 FCFA / kg</td>
-                <td className="py-4 px-3 text-[#A19D98]">Échantillons, urgences, petits colis</td>
+                <td className="py-4 px-3 font-mono text-[#A8141B]">7 500 FCFA / kg</td>
+                <td className="py-4 px-3 text-[#5C5854]">Échantillons, urgences, petits colis</td>
               </tr>
             </tbody>
           </table>
@@ -86,21 +86,21 @@ export default function Infos() {
 
       {/* FAQ */}
       <section className="mb-16">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] mb-2">FAQ</p>
-        <h2 className="font-display text-2xl md:text-3xl text-[#FDFBF7] mb-6">Tes questions, nos réponses.</h2>
+        <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-2">FAQ</p>
+        <h2 className="font-display text-2xl md:text-3xl text-[#1A1515] mb-6">Tes questions, nos réponses.</h2>
 
         <Accordion type="single" collapsible className="space-y-2" data-testid="faq-accordion">
           {FAQS.map((item) => (
             <AccordionItem
               key={item.q}
               value={`faq-${item.q}`}
-              className="border border-white/5 rounded-xl bg-[#141010] hover:border-[#D4AF37]/25 transition-colors data-[state=open]:border-[#D4AF37]/40 data-[state=open]:bg-[#1A1515] px-5"
+              className="border border-[#1A1515]/8 rounded-xl bg-[#FFFFFF] hover:border-[#B8941E]/25 transition-colors data-[state=open]:border-[#B8941E]/40 data-[state=open]:bg-[#F5F0E6] px-5"
               data-testid={`faq-item-${FAQS.indexOf(item)}`}
             >
-              <AccordionTrigger className="text-left text-[#FDFBF7] hover:text-[#D4AF37] hover:no-underline py-5 font-display text-base md:text-lg">
+              <AccordionTrigger className="text-left text-[#1A1515] hover:text-[#B8941E] hover:no-underline py-5 font-display text-base md:text-lg">
                 {item.q}
               </AccordionTrigger>
-              <AccordionContent className="text-[#A19D98] text-sm leading-relaxed pb-5">
+              <AccordionContent className="text-[#5C5854] text-sm leading-relaxed pb-5">
                 {item.a}
               </AccordionContent>
             </AccordionItem>
@@ -109,11 +109,11 @@ export default function Infos() {
       </section>
 
       {/* Contact */}
-      <section className="mb-16 rounded-2xl bg-gradient-to-br from-[#C8102E]/15 to-[#0F0C0C] border border-[#C8102E]/30 p-6 md:p-10 text-center">
-        <h2 className="font-display text-2xl md:text-3xl text-[#FDFBF7] mb-3">
+      <section className="mb-16 rounded-2xl bg-gradient-to-br from-[#C8102E]/15 to-[#F9F4EA] border border-[#C8102E]/30 p-6 md:p-10 text-center">
+        <h2 className="font-display text-2xl md:text-3xl text-[#1A1515] mb-3">
           Encore une question ?
         </h2>
-        <p className="text-sm md:text-base text-[#A19D98] mb-6 max-w-md mx-auto">
+        <p className="text-sm md:text-base text-[#5C5854] mb-6 max-w-md mx-auto">
           On répond plus vite que la lumière sur WhatsApp. Envoie-nous un lien, une photo, une idée — on s'occupe du reste.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -129,14 +129,14 @@ export default function Infos() {
           <a
             href="tel:+22606900288"
             data-testid="infos-call-cta"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-[#D4AF37] text-[#D4AF37] rounded-md font-semibold hover:bg-[#D4AF37]/10 transition-all text-sm uppercase tracking-wider"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-[#B8941E] text-[#B8941E] rounded-md font-semibold hover:bg-[#B8941E]/10 transition-all text-sm uppercase tracking-wider"
           >
             <Phone size={16} /> +226 06 90 02 88
           </a>
           <a
             href="tel:+22607336700"
             data-testid="infos-call2-cta"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-[#D4AF37]/40 text-[#A19D98] rounded-md font-semibold hover:text-[#D4AF37] hover:border-[#D4AF37] transition-all text-sm uppercase tracking-wider"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-[#B8941E]/40 text-[#5C5854] rounded-md font-semibold hover:text-[#B8941E] hover:border-[#B8941E] transition-all text-sm uppercase tracking-wider"
           >
             <Phone size={16} /> +226 07 33 67 00
           </a>

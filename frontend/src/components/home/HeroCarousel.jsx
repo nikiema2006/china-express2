@@ -19,7 +19,7 @@ export default function HeroCarousel() {
   return (
     <section
       data-testid="hero-carousel"
-      className="relative overflow-hidden h-[78vh] min-h-[540px] md:h-[88vh] md:min-h-[620px] bg-[#0A0A0A]"
+      className="relative overflow-hidden h-[78vh] min-h-[540px] md:h-[88vh] md:min-h-[620px] bg-[#FDFBF7]"
     >
       {/* Phoenix motif background */}
       <div
@@ -48,8 +48,8 @@ export default function HeroCarousel() {
             alt={current.name}
             className="w-full h-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/80 to-[#0A0A0A]/30" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FDFBF7] via-[#FDFBF7]/80 to-[#FDFBF7]/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7] via-transparent to-transparent" />
         </motion.div>
       </AnimatePresence>
 
@@ -62,10 +62,10 @@ export default function HeroCarousel() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-[#D4AF37]/30"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-[#B8941E]/30"
           >
-            <Sparkles size={12} className="text-[#D4AF37]" />
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-medium">
+            <Sparkles size={12} className="text-[#B8941E]" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] font-medium">
               {current.badge || "Produit phare"}
             </span>
           </motion.div>
@@ -78,7 +78,7 @@ export default function HeroCarousel() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.6 }}
-              className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#FDFBF7] leading-[1.05]"
+              className="font-display text-4xl sm:text-5xl lg:text-6xl text-[#1A1515] leading-[1.05]"
             >
               {current.name}
               <br />
@@ -91,10 +91,10 @@ export default function HeroCarousel() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="text-base md:text-lg text-[#A19D98] leading-relaxed max-w-xl"
+            className="text-base md:text-lg text-[#5C5854] leading-relaxed max-w-xl"
           >
             De Shenzhen à Ouaga, sans intermédiaire. Calcule ta marge, lance ta commande, reçois ton colis.
-            <span className="text-[#FDFBF7] font-medium"> Le Made in China devient Made for You.</span>
+            <span className="text-[#1A1515] font-medium"> Le Made in China devient Made for You.</span>
           </motion.p>
 
           {/* Price */}
@@ -106,16 +106,16 @@ export default function HeroCarousel() {
             className="flex items-end gap-6"
           >
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-[#A19D98]">Prix gros dès</p>
-              <p className="font-mono text-3xl md:text-4xl font-bold text-[#D4AF37]">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#5C5854]">Prix gros dès</p>
+              <p className="font-mono text-3xl md:text-4xl font-bold text-[#B8941E]">
                 {formatXOF(current.wholesalePrice)}
               </p>
             </div>
-            <div className="hidden sm:block w-px h-12 bg-[#D4AF37]/20" />
+            <div className="hidden sm:block w-px h-12 bg-[#B8941E]/20" />
             <div className="hidden sm:block">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-[#A19D98]">Revente locale</p>
-              <p className="font-mono text-xl text-[#FDFBF7] flex items-center gap-1.5">
-                <TrendingUp size={16} className="text-[#5DBA67]" />
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#5C5854]">Revente locale</p>
+              <p className="font-mono text-xl text-[#1A1515] flex items-center gap-1.5">
+                <TrendingUp size={16} className="text-[#1F6B23]" />
                 {formatXOF(current.suggestedSellPrice)}
               </p>
             </div>
@@ -131,7 +131,7 @@ export default function HeroCarousel() {
             <Link
               to={`/produit/${current.slug}`}
               data-testid="hero-cta-product"
-              className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#C8102E] to-[#A60D26] text-[#FDFBF7] rounded-md font-semibold hover:brightness-110 transition-all glow-red text-sm uppercase tracking-wider"
+              className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#C8102E] to-[#A60D26] text-white rounded-md font-semibold hover:brightness-110 transition-all glow-red text-sm uppercase tracking-wider"
             >
               Voir le produit
               <ArrowRight size={16} />
@@ -139,7 +139,7 @@ export default function HeroCarousel() {
             <Link
               to="/catalogue"
               data-testid="hero-cta-catalog"
-              className="inline-flex items-center gap-2 px-7 py-3.5 border border-[#D4AF37] text-[#D4AF37] rounded-md font-semibold hover:bg-[#D4AF37]/10 transition-all text-sm uppercase tracking-wider"
+              className="inline-flex items-center gap-2 px-7 py-3.5 border border-[#B8941E] text-[#B8941E] rounded-md font-semibold hover:bg-[#B8941E]/10 transition-all text-sm uppercase tracking-wider"
             >
               Tout le catalogue
             </Link>
@@ -156,16 +156,16 @@ export default function HeroCarousel() {
             data-testid={`hero-dot-${i}`}
             aria-label={`Aller au produit ${i + 1}`}
             className={`h-1 rounded-full transition-all ${
-              i === index ? "w-10 bg-[#D4AF37]" : "w-5 bg-[#FDFBF7]/20 hover:bg-[#FDFBF7]/40"
+              i === index ? "w-10 bg-[#B8941E]" : "w-5 bg-[#1A1515]/20 hover:bg-[#1A1515]/40"
             }`}
           />
         ))}
       </div>
 
       {/* Slide counter */}
-      <div className="hidden md:flex absolute top-8 right-8 items-center gap-3 font-mono text-xs tracking-wider text-[#A19D98]">
-        <span className="text-[#D4AF37] text-2xl">{String(index + 1).padStart(2, "0")}</span>
-        <div className="w-12 h-px bg-[#D4AF37]/30" />
+      <div className="hidden md:flex absolute top-8 right-8 items-center gap-3 font-mono text-xs tracking-wider text-[#5C5854]">
+        <span className="text-[#B8941E] text-2xl">{String(index + 1).padStart(2, "0")}</span>
+        <div className="w-12 h-px bg-[#B8941E]/30" />
         <span>{String(slides.length).padStart(2, "0")}</span>
       </div>
     </section>

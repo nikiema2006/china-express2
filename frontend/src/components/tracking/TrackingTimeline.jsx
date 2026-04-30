@@ -29,10 +29,10 @@ export default function TrackingTimeline({ tracking }) {
               <div
                 className={`w-11 h-11 rounded-full flex items-center justify-center border-2 transition-all ${
                   isCompleted
-                    ? "bg-[#D4AF37] border-[#D4AF37] text-[#0A0A0A] shadow-[0_0_18px_rgba(212,175,55,0.5)]"
+                    ? "bg-[#B8941E] border-[#B8941E] text-[#1A1515] shadow-[0_0_18px_rgba(212,175,55,0.5)]"
                     : isActive
-                    ? "bg-[#C8102E] border-[#C8102E] text-[#FDFBF7] shadow-[0_0_18px_rgba(200,16,46,0.5)] animate-pulse"
-                    : "bg-[#1A1515] border-[#3a2e2e] text-[#75716C]"
+                    ? "bg-[#C8102E] border-[#C8102E] text-white shadow-[0_0_18px_rgba(200,16,46,0.5)] animate-pulse"
+                    : "bg-[#F5F0E6] border-[#E5DCC9] text-[#8A857F]"
                 }`}
               >
                 {isCompleted ? <Check size={18} strokeWidth={2.5} /> : <Icon size={18} strokeWidth={1.7} />}
@@ -40,7 +40,7 @@ export default function TrackingTimeline({ tracking }) {
               {i < TRACKING_STATUSES.length - 1 && (
                 <div
                   className={`w-px flex-1 min-h-[44px] my-1 ${
-                    isCompleted ? "bg-[#D4AF37]" : "bg-[#3a2e2e]"
+                    isCompleted ? "bg-[#B8941E]" : "bg-[#E5DCC9]"
                   }`}
                 />
               )}
@@ -50,14 +50,14 @@ export default function TrackingTimeline({ tracking }) {
             <div className="pb-6 flex-1">
               <p
                 className={`font-display text-base md:text-lg ${
-                  isCompleted || isActive ? "text-[#FDFBF7]" : "text-[#75716C]"
+                  isCompleted || isActive ? "text-[#1A1515]" : "text-[#8A857F]"
                 }`}
               >
                 {step.label}
               </p>
-              <p className="text-sm text-[#A19D98] mt-0.5 leading-relaxed">{step.description}</p>
+              <p className="text-sm text-[#5C5854] mt-0.5 leading-relaxed">{step.description}</p>
               {historyEntry && (
-                <p className="text-xs font-mono text-[#D4AF37] mt-1.5 tracking-wider">
+                <p className="text-xs font-mono text-[#B8941E] mt-1.5 tracking-wider">
                   {historyEntry.date} — {historyEntry.note}
                 </p>
               )}

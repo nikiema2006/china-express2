@@ -1,4 +1,5 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Home, Grid3X3, Package2, Info } from "lucide-react";
 
 const TABS = [
@@ -12,32 +13,40 @@ export default function BottomNav() {
   return (
     <nav
       data-testid="bottom-nav"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-[68px] glass-strong border-t border-[#D4AF37]/20 flex justify-around items-center pb-safe"
+      className="md:hidden fixed bottom-safe left-1/2 -translate-x-1/2 z-50"
     >
-      {TABS.map(({ to, label, icon: Icon, end, testid }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          data-testid={testid}
-          className={({ isActive }) =>
-            `flex flex-col items-center gap-1 px-3 py-1 transition-all duration-200 ${
-              isActive ? "text-[#D4AF37]" : "text-[#A19D98] hover:text-[#FDFBF7]"
-            }`
-          }
-        >
-          {({ isActive }) => (
-            <>
-              <Icon
-                size={22}
-                strokeWidth={isActive ? 2 : 1.6}
-                className={isActive ? "drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]" : ""}
-              />
-              <span className="text-[10px] uppercase tracking-[0.15em] font-medium">{label}</span>
-            </>
-          )}
-        </NavLink>
-      ))}
+      <div className="flex items-center gap-1 p-1.5 rounded-full bg-white/90 backdrop-blur-2xl border border-[#1A1515]/8 shadow-elev">
+        {TABS.map(({ to, label, icon: Icon, end, testid }) => (
+          <NavLink key={to} to={to} end={end} data-testid={testid} className="relative">
+            {({ isActive }) => (
+              <div
+                className={`relative flex items-center gap-1.5 px-3.5 py-2.5 rounded-full transition-colors duration-200 ${
+                  isActive ? "text-white" : "text-[#5C5854] hover:text-[#1A1515]"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="bottom-nav-pill"
+                    className="absolute inset-0 rounded-full bg-gradient-to-br from-[#C8102E] to-[#A60D26] glow-red"
+                    transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  />
+                )}
+                <Icon size={19} strokeWidth={isActive ? 2.2 : 1.7} className="relative z-10" />
+                {isActive && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    transition={{ duration: 0.18, delay: 0.08 }}
+                    className="relative z-10 text-xs font-semibold tracking-tight whitespace-nowrap overflow-hidden"
+                  >
+                    {label}
+                  </motion.span>
+                )}
+              </div>
+            )}
+          </NavLink>
+        ))}
+      </div>
     </nav>
   );
 }
