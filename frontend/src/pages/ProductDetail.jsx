@@ -1,20 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Package, Truck, ShieldCheck, MessageCircle, Phone } from "lucide-react";
-import { getProductBySlug, PRODUCTS } from "../data/products";
+import { ArrowLeft, Star, Package, ShieldCheck, MessageCircle, Phone , LucideRulerDimensionLine, LucidePencilRuler, Loader2} from "lucide-react";
+import { getProductBySlug, getProducts } from "../services/products";
 import { formatXOF } from "../lib/format";
 import ProfitCalculator from "../components/products/ProfitCalculator";
 import ProductCard from "../components/products/ProductCard";
 
 export default function ProductDetail() {
   const { slug } = useParams();
-  const product = getProductBySlug(slug);
+  const [product, setProduct] = useState(null);
+  const [related, setRelated] = useState([]);
   const [activeImage, setActiveImage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!product) return <Navigate to="/catalogue" replace />;
+  useEffect(() => {
+    async function fetchProduct() {
+      try {
+        const data = await getProductBySlug(slug);
+        setProduct(data);
 
-  const related = PRODUCTS.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
+        const allProducts = await getProducts();
+        const relatedProducts = allProducts.filter((p) => p.id !== data.id && p.category === data.category).slice(0, 4);
+        setRelated(relatedProducts);
+      } catch (err) {
+        setError("Produit non trouvé.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex justify-center">
+        <Loader2 size={32} className="animate-spin text-[#B8941E]" />
+      </div>
+    );
+  }
+
+  if (error || !product) return <Navigate to="/catalogue" replace />;
 
   return (
     <div data-testid="product-detail-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10">
@@ -113,9 +141,9 @@ export default function ProductDetail() {
               <p className="font-mono text-[#1A1515] mt-0.5">{product.weightKg} kg</p>
             </div>
             <div className="rounded-lg bg-[#F5F0E6] border border-[#1A1515]/8 p-3">
-              <Truck size={14} className="text-[#B8941E] mb-1.5" />
-              <p className="text-[#5C5854] uppercase tracking-wider text-[10px]">Origine</p>
-              <p className="font-mono text-[#1A1515] mt-0.5">Shenzhen</p>
+              <LucideRulerDimensionLine size={14} className="text-[#B8941E] mb-1.5" />
+              <p className="text-[#5C5854] uppercase tracking-wider text-[10px]">Dimensions</p>
+              <p className="font-mono text-[#1A1515] mt-0.5">{product.dimensions}</p>
             </div>
             <div className="rounded-lg bg-[#F5F0E6] border border-[#1A1515]/8 p-3">
               <ShieldCheck size={14} className="text-[#B8941E] mb-1.5" />

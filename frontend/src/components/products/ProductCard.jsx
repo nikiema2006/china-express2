@@ -68,7 +68,7 @@ export default function ProductCard({ product, index = 0 }) {
               </p>
             </div>
             <div className="text-right space-y-0.5">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#B8941E]">Gros</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#B8941E]">Prix Gros</p>
               <p className="font-mono text-sm font-semibold text-[#B8941E]">
                 {formatXOF(product.wholesalePrice)}
               </p>

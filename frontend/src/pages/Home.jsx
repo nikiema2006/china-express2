@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, MessageCircle, Sparkles, Headphones, Shirt, Home as HomeIcon, Sparkle, Wrench } from "lucide-react";
+import { ArrowRight, ShieldCheck, MessageCircle, Sparkles, Headphones, Shirt, Home as HomeIcon, Sparkle, Wrench, Loader2 } from "lucide-react";
 import HeroCarousel from "../components/home/HeroCarousel";
 import ProductCard from "../components/products/ProductCard";
-import { PRODUCTS, getTrendingProducts, CATEGORIES } from "../data/products";
+import { getTrendingProducts, CATEGORIES } from "../services/products";
 
 const CAT_ICONS = {
   tech: Headphones,
@@ -17,11 +17,25 @@ const CAT_ICONS = {
 const PAGE_SIZE = 6;
 
 export default function Home() {
-  const trending = useMemo(() => getTrendingProducts(), []);
+  const [trending, setTrending] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [visibleTrending, setVisibleTrending] = useState(PAGE_SIZE);
   const sentinelRef = useRef(null);
 
-  // Infinite scroll using IntersectionObserver
+  useEffect(() => {
+    async function fetchTrending() {
+      try {
+        const data = await getTrendingProducts();
+        setTrending(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTrending();
+  }, []);
+
   useEffect(() => {
     const node = sentinelRef.current;
     if (!node) return;
@@ -41,7 +55,6 @@ export default function Home() {
     <div data-testid="home-page">
       <HeroCarousel />
 
-      {/* Marquee announcement */}
       <div className="bg-gradient-to-r from-[#C8102E]/8 via-[#B8941E]/10 to-[#C8102E]/8 border-y border-[#B8941E]/20 py-3 overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap gap-12 text-sm">
           {Array.from({ length: 2 }).map((_, k) => (
@@ -60,7 +73,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Categories — compact horizontal on mobile, grid on desktop */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 md:pt-16">
         <div className="flex items-end justify-between mb-5">
           <div>
@@ -72,7 +84,6 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Mobile: horizontal scroll pills */}
         <div className="flex gap-2.5 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1 md:hidden">
           {CATEGORIES.filter((c) => c.id !== "all").map((cat) => {
             const Icon = CAT_ICONS[cat.id] || Sparkles;
@@ -92,7 +103,6 @@ export default function Home() {
           })}
         </div>
 
-        {/* Desktop: grid */}
         <div className="hidden md:grid grid-cols-5 gap-3">
           {CATEGORIES.filter((c) => c.id !== "all").map((cat) => {
             const Icon = CAT_ICONS[cat.id] || Sparkles;
@@ -111,7 +121,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending products with infinite scroll */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
         <div className="flex items-end justify-between mb-6">
           <div>
@@ -121,32 +130,38 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
-          {trending.slice(0, visibleTrending).map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
-          ))}
-        </div>
-
-        {/* Sentinel + Load more button */}
-        {visibleTrending < trending.length && (
-          <div ref={sentinelRef} className="flex justify-center mt-8" data-testid="home-trending-sentinel">
-            <button
-              onClick={() => setVisibleTrending((v) => Math.min(v + PAGE_SIZE, trending.length))}
-              data-testid="home-trending-load-more"
-              className="px-6 py-3 rounded-full bg-white border border-[#B8941E]/40 text-[#B8941E] hover:bg-[#B8941E]/8 transition-all text-sm font-semibold uppercase tracking-wider shadow-soft"
-            >
-              Charger plus ({trending.length - visibleTrending} restant{trending.length - visibleTrending > 1 ? "s" : ""})
-            </button>
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 size={32} className="animate-spin text-[#B8941E]" />
           </div>
-        )}
-        {visibleTrending >= trending.length && (
-          <p className="text-center mt-8 text-sm text-[#8A857F]" data-testid="home-trending-end">
-            Tu as tout vu — file vers le <Link to="/catalogue" className="text-[#B8941E] hover:underline">catalogue complet</Link>.
-          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+              {trending.slice(0, visibleTrending).map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
+              ))}
+            </div>
+
+            {visibleTrending < trending.length && (
+              <div ref={sentinelRef} className="flex justify-center mt-8" data-testid="home-trending-sentinel">
+                <button
+                  onClick={() => setVisibleTrending((v) => Math.min(v + PAGE_SIZE, trending.length))}
+                  data-testid="home-trending-load-more"
+                  className="px-6 py-3 rounded-full bg-white border border-[#B8941E]/40 text-[#B8941E] hover:bg-[#B8941E]/8 transition-all text-sm font-semibold uppercase tracking-wider shadow-soft"
+                >
+                  Charger plus ({trending.length - visibleTrending} restant{trending.length - visibleTrending > 1 ? "s" : ""})
+                </button>
+              </div>
+            )}
+            {visibleTrending >= trending.length && (
+              <p className="text-center mt-8 text-sm text-[#8A857F]" data-testid="home-trending-end">
+                Tu as tout vu — file vers le <Link to="/catalogue" className="text-[#B8941E] hover:underline">catalogue complet</Link>.
+              </p>
+            )}
+          </>
         )}
       </section>
 
-      {/* Trust + WhatsApp CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <motion.div

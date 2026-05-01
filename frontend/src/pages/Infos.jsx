@@ -1,14 +1,41 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link2, Handshake, Send, PackageCheck, Phone, MessageCircle, Mail } from "lucide-react";
+import { Link2, Handshake, Send, PackageCheck, Phone, MessageCircle, Mail, Loader2 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
-import { FAQS, HOW_IT_WORKS } from "../data/faqs";
+import { getFAQs, getHowItWorks } from "../services/content";
 
 const ICONS = { Link2, Handshake, Send, PackageCheck };
 
 export default function Infos() {
+  const [faqs, setFaqs] = useState([]);
+  const [howItWorks, setHowItWorks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [faqsData, howData] = await Promise.all([getFAQs(), getHowItWorks()]);
+        setFaqs(faqsData);
+        setHowItWorks(howData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex justify-center">
+        <Loader2 size={32} className="animate-spin text-[#B8941E]" />
+      </div>
+    );
+  }
+
   return (
     <div data-testid="infos-page" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-14">
-      {/* Hero */}
       <div className="text-center mb-12 md:mb-20">
         <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-3">Comment ça marche</p>
         <h1 className="font-display text-3xl md:text-5xl text-[#1A1515] mb-4 leading-tight">
@@ -19,10 +46,9 @@ export default function Infos() {
         </p>
       </div>
 
-      {/* Steps */}
       <section className="mb-16 md:mb-24">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {HOW_IT_WORKS.map((step, i) => {
+          {howItWorks.map((step, i) => {
             const Icon = ICONS[step.icon];
             return (
               <motion.div
@@ -45,7 +71,6 @@ export default function Infos() {
         </div>
       </section>
 
-      {/* Transport comparison */}
       <section className="mb-16 md:mb-24 rounded-2xl bg-gradient-to-br from-[#FFFFFF] to-[#F9F4EA] border border-[#B8941E]/15 p-6 md:p-10">
         <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-2">Modes d'expédition</p>
         <h2 className="font-display text-2xl md:text-3xl text-[#1A1515] mb-6">Comparatif transport</h2>
@@ -63,20 +88,20 @@ export default function Infos() {
             <tbody className="text-[#1A1515]">
               <tr className="border-b border-[#1A1515]/8">
                 <td className="py-4 px-3 font-display">Maritime</td>
-                <td className="py-4 px-3 font-mono">35–50 jours</td>
-                <td className="py-4 px-3 font-mono text-[#1F6B23]">1 200 FCFA / kg</td>
+                <td className="py-4 px-3 font-mono">45–60 jours</td>
+                <td className="py-4 px-3 font-mono text-[#1F6B23]">En fonction des dimensions du colis</td>
                 <td className="py-4 px-3 text-[#5C5854]">Gros volumes, meubles, conteneurs</td>
               </tr>
               <tr className="border-b border-[#1A1515]/8 bg-[#B8941E]/5">
                 <td className="py-4 px-3 font-display text-[#B8941E]">Aérien Standard ★</td>
                 <td className="py-4 px-3 font-mono">12–18 jours</td>
-                <td className="py-4 px-3 font-mono text-[#B8941E]">4 800 FCFA / kg</td>
-                <td className="py-4 px-3 text-[#5C5854]">Le bon compromis pour la majorité des commandes</td>
+                <td className="py-4 px-3 font-mono text-[#B8941E]">9000 FCFA/kg ou 12 000 FCFA/kg</td>
+                <td className="py-4 px-3 text-[#5C5854]">Le bon compromis pour la majorité des commandes, et petits colis. Les frais de transport varie en fonction du type de produits</td>
               </tr>
               <tr>
                 <td className="py-4 px-3 font-display">Aérien Express</td>
                 <td className="py-4 px-3 font-mono">5–8 jours</td>
-                <td className="py-4 px-3 font-mono text-[#A8141B]">7 500 FCFA / kg</td>
+                <td className="py-4 px-3 font-mono text-[#A8141B]">Variable</td>
                 <td className="py-4 px-3 text-[#5C5854]">Échantillons, urgences, petits colis</td>
               </tr>
             </tbody>
@@ -84,31 +109,29 @@ export default function Infos() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="mb-16">
         <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-2">FAQ</p>
         <h2 className="font-display text-2xl md:text-3xl text-[#1A1515] mb-6">Tes questions, nos réponses.</h2>
 
         <Accordion type="single" collapsible className="space-y-2" data-testid="faq-accordion">
-          {FAQS.map((item) => (
+          {faqs.map((item, index) => (
             <AccordionItem
-              key={item.q}
-              value={`faq-${item.q}`}
+              key={item.id}
+              value={`faq-${item.id}`}
               className="border border-[#1A1515]/8 rounded-xl bg-[#FFFFFF] hover:border-[#B8941E]/25 transition-colors data-[state=open]:border-[#B8941E]/40 data-[state=open]:bg-[#F5F0E6] px-5"
-              data-testid={`faq-item-${FAQS.indexOf(item)}`}
+              data-testid={`faq-item-${index}`}
             >
               <AccordionTrigger className="text-left text-[#1A1515] hover:text-[#B8941E] hover:no-underline py-5 font-display text-base md:text-lg">
-                {item.q}
+                {item.question}
               </AccordionTrigger>
               <AccordionContent className="text-[#5C5854] text-sm leading-relaxed pb-5">
-                {item.a}
+                {item.answer}
               </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
       </section>
 
-      {/* Contact */}
       <section className="mb-16 rounded-2xl bg-gradient-to-br from-[#C8102E]/15 to-[#F9F4EA] border border-[#C8102E]/30 p-6 md:p-10 text-center">
         <h2 className="font-display text-2xl md:text-3xl text-[#1A1515] mb-3">
           Encore une question ?

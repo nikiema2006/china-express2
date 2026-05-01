@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, Tooltip } from "recharts";
 import { Ship, Plane, Zap, TrendingUp, AlertCircle, Sparkles } from "lucide-react";
-import { SHIPPING_OPTIONS } from "../../data/products";
+import { getShippingOptions } from "../../services/products";
 import { formatXOF, formatPct } from "../../lib/format";
 
 const ICONS = { Ship, Plane, Zap };
@@ -11,16 +11,30 @@ export default function ProfitCalculator({ product }) {
   const [transportId, setTransportId] = useState("aerien_std");
   const [quantity, setQuantity] = useState(product.minWholesale || 10);
   const [sellPrice, setSellPrice] = useState(product.suggestedSellPrice);
+  const [shippingOptions, setShippingOptions] = useState([]);
 
-  // Reset whenever product changes
+  useEffect(() => {
+    async function fetchShippingOptions() {
+      try {
+        const data = await getShippingOptions();
+        setShippingOptions(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchShippingOptions();
+  }, []);
+
   useEffect(() => {
     setQuantity(product.minWholesale || 10);
     setSellPrice(product.suggestedSellPrice);
   }, [product.id, product.minWholesale, product.suggestedSellPrice]);
 
-  const transport = SHIPPING_OPTIONS.find((s) => s.id === transportId);
+  const transport = shippingOptions.find((s) => s.id === transportId);
 
   const calc = useMemo(() => {
+    if (!transport) return null;
+
     const qty = Math.max(1, Number(quantity) || 0);
     const isWholesale = qty >= product.minWholesale;
     const unitCost = isWholesale ? product.wholesalePrice : product.retailPrice;
@@ -48,6 +62,8 @@ export default function ProfitCalculator({ product }) {
     };
   }, [quantity, sellPrice, transport, product]);
 
+  if (!calc || !transport) return null;
+
   const chartData = [
     { name: "Coût produit", value: calc.productCost, color: "#C8102E" },
     { name: "Transport", value: calc.shippingCost, color: "#A60D26" },
@@ -62,12 +78,10 @@ export default function ProfitCalculator({ product }) {
       data-testid="profit-calculator"
       className="rounded-2xl border border-[#B8941E]/20 bg-gradient-to-b from-[#FFFFFF] to-[#F9F4EA] p-5 md:p-7 relative overflow-hidden"
     >
-      {/* Subtle phoenix glow corner */}
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#C8102E]/10 blur-3xl rounded-full pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#B8941E]/10 blur-3xl rounded-full pointer-events-none" />
 
       <div className="relative">
-        {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
             <p className="text-[10px] uppercase tracking-[0.3em] text-[#B8941E] mb-1.5 flex items-center gap-1.5">
@@ -81,13 +95,12 @@ export default function ProfitCalculator({ product }) {
           </div>
         </div>
 
-        {/* Transport selector */}
         <div className="mb-6">
           <label className="text-[10px] uppercase tracking-[0.25em] text-[#5C5854] block mb-2.5">
             Mode de transport
           </label>
           <div className="grid grid-cols-3 gap-2">
-            {SHIPPING_OPTIONS.map((opt) => {
+            {shippingOptions.map((opt) => {
               const Icon = ICONS[opt.icon];
               const active = opt.id === transportId;
               return (
@@ -101,7 +114,7 @@ export default function ProfitCalculator({ product }) {
                       : "border-[#1A1515]/8 bg-[#F5F0E6] text-[#5C5854] hover:border-[#B8941E]/30 hover:text-[#1A1515]"
                   }`}
                 >
-                  <Icon size={18} strokeWidth={1.6} />
+                  {Icon && <Icon size={18} strokeWidth={1.6} />}
                   <span className="text-xs font-medium leading-tight text-center">
                     {opt.label}
                   </span>
@@ -112,7 +125,6 @@ export default function ProfitCalculator({ product }) {
           </div>
         </div>
 
-        {/* Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="text-[10px] uppercase tracking-[0.25em] text-[#5C5854] block mb-2">
@@ -165,7 +177,6 @@ export default function ProfitCalculator({ product }) {
           </div>
         </div>
 
-        {/* Results */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <ResultCard label="Coût total" value={formatXOF(calc.totalCost)} testid="calc-total-cost" />
           <ResultCard label="Revenu" value={formatXOF(calc.revenue)} testid="calc-revenue" accent="gold" />
@@ -179,7 +190,6 @@ export default function ProfitCalculator({ product }) {
           <ResultCard label="ROI" value={formatPct(calc.roi)} testid="calc-roi" accent={isProfitable ? "success" : "danger"} />
         </div>
 
-        {/* Sub stats */}
         <div className="grid grid-cols-2 gap-3 mb-6 text-xs">
           <div className="flex justify-between p-3 rounded-lg bg-[#F5F0E6] border border-[#1A1515]/8">
             <span className="text-[#5C5854]">Coût unitaire débarqué</span>
@@ -191,7 +201,6 @@ export default function ProfitCalculator({ product }) {
           </div>
         </div>
 
-        {/* Chart */}
         <div className="rounded-xl bg-[#F9F4EA] border border-[#1A1515]/8 p-4">
           <p className="text-[10px] uppercase tracking-[0.25em] text-[#5C5854] mb-3">
             Décomposition financière
@@ -232,7 +241,6 @@ export default function ProfitCalculator({ product }) {
           </div>
         </div>
 
-        {/* Recommendation */}
         <AnimatePresence mode="wait">
           <motion.div
             key={isProfitable ? "ok" : "no"}
