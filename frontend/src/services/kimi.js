@@ -7,7 +7,13 @@ async function analyzeAndImport(url, imageBase64 = null) {
     body: JSON.stringify({ url, imageBase64 }),
   });
 
-  const data = await resp.json();
+  const text = await resp.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('Response is not valid JSON');
+  }
 
   if (!resp.ok) {
     throw new Error(data.error || `Worker error: ${resp.status}`);
