@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import Layout from "@/components/layout/Layout";
@@ -9,6 +9,7 @@ import Catalog from "@/pages/Catalog";
 import ProductDetail from "@/pages/ProductDetail";
 import Tracking from "@/pages/Tracking";
 import Infos from "@/pages/Infos";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -18,20 +19,29 @@ function ScrollToTop() {
   return null;
 }
 
+function MainLayout() {
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
+}
+
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
         <ScrollToTop />
-        <Layout>
-          <Routes>
+        <Routes>
+          <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/catalogue" element={<Catalog />} />
             <Route path="/produit/:slug" element={<ProductDetail />} />
             <Route path="/tracking" element={<Tracking />} />
             <Route path="/infos" element={<Infos />} />
-          </Routes>
-        </Layout>
+          </Route>
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Routes>
         <Toaster
           theme="light"
           position="top-right"

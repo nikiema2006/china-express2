@@ -48,7 +48,7 @@ export default function HeroCarousel() {
             alt={current.name}
             className="w-full h-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FDFBF7] via-[#FDFBF7]/80 to-[#FDFBF7]/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FDFBF7] via-[#FDFBF7]/40 to-[#FDFBF7]/30" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7] via-transparent to-transparent" />
         </motion.div>
       </AnimatePresence>
@@ -93,7 +93,7 @@ export default function HeroCarousel() {
             transition={{ delay: 0.25 }}
             className="text-base md:text-lg text-[#5C5854] leading-relaxed max-w-xl"
           >
-            De Shenzhen à Ouaga, sans intermédiaire. Calcule ta marge, lance ta commande, reçois ton colis.
+            {current.description}
             <span className="text-[#1A1515] font-medium"> Le Made in China devient Made for You.</span>
           </motion.p>
 

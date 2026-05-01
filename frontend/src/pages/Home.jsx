@@ -171,7 +171,7 @@ export default function Home() {
             <ShieldCheck size={36} className="text-[#B8941E] mb-5" strokeWidth={1.5} />
             <h3 className="font-display text-2xl text-[#1A1515] mb-3">Tu envoies. On vérifie.</h3>
             <p className="text-sm md:text-base text-[#5C5854] leading-relaxed">
-              Notre équipe à Shenzhen contrôle visuellement chaque lot avant emballage. Photos et vidéos disponibles sur demande pour les commandes &gt; 100 000 FCFA.
+              Notre équipe à Shenzhen contrôle visuellement chaque lot avant emballage. Photos et vidéos disponibles sur demande.
             </p>
           </motion.div>
 

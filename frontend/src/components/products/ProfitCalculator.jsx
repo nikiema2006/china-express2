@@ -65,7 +65,7 @@ export default function ProfitCalculator({ product }) {
   if (!calc || !transport) return null;
 
   const chartData = [
-    { name: "Coût produit", value: calc.productCost, color: "#C8102E" },
+    { name: "Produit", value: calc.productCost, color: "#C8102E" },
     { name: "Transport", value: calc.shippingCost, color: "#A60D26" },
     { name: "Revenu", value: calc.revenue, color: "#B8941E" },
     { name: "Profit", value: Math.max(calc.profit, 0), color: calc.profit >= 0 ? "#1F6B23" : "#8A857F" },

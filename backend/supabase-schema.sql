@@ -28,6 +28,7 @@ CREATE TABLE products (
   rating NUMERIC NOT NULL,
   reviews INTEGER NOT NULL,
   trending BOOLEAN NOT NULL DEFAULT false,
+  status TEXT NOT NULL DEFAULT 'draft',
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

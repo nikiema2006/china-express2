@@ -20,6 +20,7 @@ function mapProduct(p) {
     rating: Number(p.rating),
     reviews: p.reviews,
     trending: p.trending,
+    status: p.status,
   };
 }
 
@@ -36,10 +37,13 @@ function mapShipping(s) {
   };
 }
 
+const PUBLISHED = { status: 'published' };
+
 export async function getProducts() {
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .match(PUBLISHED)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data.map(mapProduct);
@@ -49,6 +53,7 @@ export async function getProductBySlug(slug) {
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .match(PUBLISHED)
     .eq('slug', slug)
     .single();
   if (error) throw error;
@@ -59,6 +64,7 @@ export async function getProductById(id) {
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .match(PUBLISHED)
     .eq('id', id)
     .single();
   if (error) throw error;
@@ -69,6 +75,7 @@ export async function getTrendingProducts() {
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .match(PUBLISHED)
     .eq('trending', true)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -76,7 +83,7 @@ export async function getTrendingProducts() {
 }
 
 export async function getProductsByCategory(catId) {
-  const query = supabase.from('products').select('*').order('created_at', { ascending: false });
+  const query = supabase.from('products').select('*').match(PUBLISHED).order('created_at', { ascending: false });
   if (catId !== 'all') {
     query.eq('category', catId);
   }

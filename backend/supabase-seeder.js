@@ -3,9 +3,10 @@
 // Usage: node backend/supabase-seeder.js
 
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-const SUPABASE_URL = 'https://bmbeahjvdiglnxfpbzyu.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtYmVhaGp2ZGlnbG54ZnBienl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODEyNzYsImV4cCI6MjA5MzE1NzI3Nn0.cNl1c65JcUcaFj3E9n99K8Oz9w641IO6j5Iy6dUS2NQ';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bmbeahjvdiglnxfpbzyu.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtYmVhaGp2ZGlnbG54ZnBienl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODEyNzYsImV4cCI6MjA5MzE1NzI3Nn0.cNl1c65JcUcaFj3E9n99K8Oz9w641IO6j5Iy6dUS2NQ';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -31,6 +32,7 @@ const PRODUCTS = [
     rating: 4.8,
     reviews: 1247,
     trending: true,
+    status: 'published',
   },
   {
     slug: "lampe-led-rechargeable",
@@ -53,6 +55,7 @@ const PRODUCTS = [
     rating: 4.6,
     reviews: 892,
     trending: true,
+    status: 'published',
   },
   {
     slug: "montre-connectee-s9",
@@ -75,6 +78,7 @@ const PRODUCTS = [
     rating: 4.7,
     reviews: 543,
     trending: true,
+    status: 'published',
   },
   {
     slug: "robe-wax-premium",
@@ -97,6 +101,7 @@ const PRODUCTS = [
     rating: 4.9,
     reviews: 312,
     trending: false,
+    status: 'published',
   },
   {
     slug: "perceuse-sans-fil-20v",
@@ -119,6 +124,7 @@ const PRODUCTS = [
     rating: 4.7,
     reviews: 178,
     trending: false,
+    status: 'published',
   },
   {
     slug: "rouge-levres-mat-set",
@@ -141,6 +147,7 @@ const PRODUCTS = [
     rating: 4.5,
     reviews: 765,
     trending: true,
+    status: 'published',
   },
   {
     slug: "powerbank-30000mah",
@@ -163,6 +170,7 @@ const PRODUCTS = [
     rating: 4.6,
     reviews: 421,
     trending: true,
+    status: 'published',
   },
   {
     slug: "chaussures-sport-running",
@@ -185,6 +193,7 @@ const PRODUCTS = [
     rating: 4.4,
     reviews: 234,
     trending: false,
+    status: 'published',
   },
   {
     slug: "ventilateur-rechargeable",
@@ -207,6 +216,7 @@ const PRODUCTS = [
     rating: 4.5,
     reviews: 588,
     trending: true,
+    status: 'published',
   },
   {
     slug: "ensemble-cuisine-inox",
@@ -229,6 +239,7 @@ const PRODUCTS = [
     rating: 4.8,
     reviews: 145,
     trending: false,
+    status: 'published',
   },
   {
     slug: "perruque-bresilienne",
@@ -251,6 +262,7 @@ const PRODUCTS = [
     rating: 4.9,
     reviews: 678,
     trending: true,
+    status: 'published',
   },
   {
     slug: "kit-soudure-electrique",
@@ -273,6 +285,7 @@ const PRODUCTS = [
     rating: 4.7,
     reviews: 92,
     trending: false,
+    status: 'published',
   },
 ];
 
