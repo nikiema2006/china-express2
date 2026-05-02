@@ -28,6 +28,7 @@ globalThis.fetch = new Proxy(globalThis.fetch, {
 });
 
 // src/index.js
+var SUPABASE_URL_BASE = "https://bmbeahjvdiglnxfpbzyu.supabase.co";
 var KIMI_API_URL = "https://api.moonshot.cn/v1/chat/completions";
 var SYSTEM_PROMPT = `Tu es un expert en e-commerce et import-export Chine-Afrique. Ta mission est d'analyser un produit depuis les plateformes chinoises et de generer toutes les donnees necessaires pour le catalogue "China Express" \u2014 un marketplace d'import-export de Shenzhen vers le Burkina Faso.
 
@@ -84,16 +85,12 @@ __name(slugify, "slugify");
 function parseJsonFromResponse(content) {
   let jsonStr = content;
   const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (codeBlockMatch) {
-    jsonStr = codeBlockMatch[1].trim();
-  }
+  if (codeBlockMatch) jsonStr = codeBlockMatch[1].trim();
   try {
     return JSON.parse(jsonStr);
   } catch {
     const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
     throw new Error("No JSON found in response");
   }
 }
@@ -101,159 +98,256 @@ __name(parseJsonFromResponse, "parseJsonFromResponse");
 function corsHeaders() {
   return {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "content-type"
   };
 }
 __name(corsHeaders, "corsHeaders");
+async function supabaseFetch(path, method, body, key) {
+  const resp = await fetch(`${SUPABASE_URL_BASE}${path}`, {
+    method,
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+      ...body ? {} : {}
+    },
+    ...body && { body: JSON.stringify(body) }
+  });
+  return resp;
+}
+__name(supabaseFetch, "supabaseFetch");
 var src_default = {
   async fetch(request, env) {
     if (request.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders() });
     }
-    try {
-      const { url, imageBase64 } = await request.json();
-      if (!url && !imageBase64) {
-        return new Response(JSON.stringify({ error: "url or imageBase64 is required" }), {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const key = env.SUPABASE_SERVICE_ROLE_KEY;
+    if (path === "/task" && request.method === "POST") {
+      try {
+        const { url: productUrl, imageBase64 } = await request.json();
+        if (!productUrl && !imageBase64) {
+          return new Response(JSON.stringify({ error: "url or imageBase64 required" }), {
+            status: 400,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const taskResp = await supabaseFetch("/rest/v1/import_tasks", "POST", {
+          url: productUrl || null,
+          image_base64: imageBase64 || null,
+          status: "queued"
+        }, key);
+        if (!taskResp.ok) {
+          const errBody = await taskResp.text();
+          console.error("[Worker] Task creation failed:", errBody);
+          return new Response(JSON.stringify({ error: "Failed to create task" }), {
+            status: 500,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const task = (await taskResp.json())[0];
+        return new Response(JSON.stringify({ task_id: task.id }), {
+          status: 200,
+          headers: { ...corsHeaders(), "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        console.error("[Worker] Error:", err.message);
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders(), "Content-Type": "application/json" }
+        });
+      }
+    }
+    if (path.startsWith("/task/") && request.method === "GET") {
+      const taskId = path.split("/")[2];
+      if (!taskId) {
+        return new Response(JSON.stringify({ error: "task_id required" }), {
           status: 400,
           headers: { ...corsHeaders(), "Content-Type": "application/json" }
         });
       }
-      const messages = [{ role: "system", content: SYSTEM_PROMPT }];
-      if (imageBase64) {
-        messages.push({
-          role: "user",
-          content: [
-            { type: "image_url", image_url: { url: imageBase64 } },
-            {
-              type: "text",
-              text: url ? `Lien du produit: ${url}
-Analyse cette image et cherche les infos sur les plateformes chinoises.` : `Analyse cette image de produit et cherche les informations sur les plateformes chinoises (Taobao, Pinduoduo, 1688, Alibaba, etc.).`
-            }
-          ]
-        });
-      } else {
-        messages.push({
-          role: "user",
-          content: `Lien du produit: ${url}
-Analyse ce produit en faisant une recherche sur les plateformes chinoises et retourne les donnees pour le catalogue.`
-        });
-      }
-      console.log("[Worker] Calling Kimi K2.6...");
-      const kimiResp = await fetch(KIMI_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${env.KIMI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "kimi-k2.6",
-          messages,
-          temperature: 1,
-          max_tokens: 4096
-        })
-      });
-      if (!kimiResp.ok) {
-        const kimiErrorBody = await kimiResp.text();
-        console.error("[Worker] Kimi API error:", kimiResp.status, kimiErrorBody);
-        return new Response(
-          JSON.stringify({ error: `Kimi API error ${kimiResp.status}: ${kimiErrorBody.substring(0, 200)}` }),
-          { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-        );
-      }
-      const kimiData = await kimiResp.json();
-      const message = kimiData.choices?.[0]?.message;
-      const rawContent = message?.content || message?.reasoning_content || "";
-      if (!rawContent) {
-        console.error("[Worker] Empty response from Kimi:", JSON.stringify(kimiData).substring(0, 500));
-        return new Response(
-          JSON.stringify({ error: "Empty response from Kimi AI" }),
-          { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-        );
-      }
-      console.log("[Worker] Kimi response received, parsing JSON...");
-      const productData = parseJsonFromResponse(rawContent);
-      const product = {
-        name: productData.name || "Produit AI",
-        slug: slugify(productData.name || `ai-${Date.now()}`),
-        category: productData.category || "tech",
-        images: productData.images || [],
-        badge: productData.badge || null,
-        badge_color: productData.badge_color || null,
-        description: productData.description || "Description en cours de redaction.",
-        retail_price: productData.retail_price || 5e3,
-        wholesale_price: productData.wholesale_price || 3e3,
-        min_retail: productData.min_retail || 1,
-        min_wholesale: productData.min_wholesale || 10,
-        suggested_sell_price: productData.suggested_sell_price || 8e3,
-        weight_kg: productData.weight_kg || 0.5,
-        dimensions: productData.dimensions || "10x50x40",
-        rating: productData.rating || 4,
-        reviews: productData.reviews || 0,
-        trending: productData.trending || false,
-        status: "draft"
-      };
-      console.log("[Worker] Inserting product into Supabase...");
-      const supabaseUrl = env.SUPABASE_URL;
-      const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY;
-      const insertResp = await fetch(`${supabaseUrl}/rest/v1/products`, {
-        method: "POST",
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation"
-        },
-        body: JSON.stringify(product)
-      });
-      if (!insertResp.ok) {
-        const errorBody = await insertResp.text();
-        if (insertResp.status === 409) {
-          product.slug = `${product.slug}-${Date.now()}`;
-          const retryResp = await fetch(`${supabaseUrl}/rest/v1/products`, {
-            method: "POST",
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-              Prefer: "return=representation"
-            },
-            body: JSON.stringify(product)
+      try {
+        const resp = await supabaseFetch(`/rest/v1/import_tasks?id=eq.${taskId}&select=*`, "GET", null, key);
+        if (!resp.ok) {
+          return new Response(JSON.stringify({ error: "Task not found" }), {
+            status: 404,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
           });
-          if (!retryResp.ok) {
-            const retryError = await retryResp.text();
-            console.error("[Worker] Insert retry failed:", retryError);
-            return new Response(
-              JSON.stringify({ error: `Insert failed: ${retryError.substring(0, 200)}` }),
-              { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-            );
-          }
-          const retryData = await retryResp.json();
-          console.log("[Worker] Product imported successfully (retry)");
-          return new Response(
-            JSON.stringify({ success: true, product: retryData[0] }),
-            { status: 200, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-          );
         }
-        console.error("[Worker] Insert failed:", errorBody);
-        return new Response(
-          JSON.stringify({ error: `Insert failed: ${errorBody.substring(0, 200)}` }),
-          { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-        );
+        const tasks = await resp.json();
+        if (!tasks.length) {
+          return new Response(JSON.stringify({ error: "Task not found" }), {
+            status: 404,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const task = tasks[0];
+        return new Response(JSON.stringify({
+          status: task.status,
+          result: task.result,
+          error: task.error,
+          product: task.result?.product || null
+        }), {
+          status: 200,
+          headers: { ...corsHeaders(), "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        console.error("[Worker] Poll error:", err.message);
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders(), "Content-Type": "application/json" }
+        });
       }
-      const insertedData = await insertResp.json();
-      console.log("[Worker] Product imported successfully:", insertedData[0]?.name);
-      return new Response(
-        JSON.stringify({ success: true, product: insertedData[0] }),
-        { status: 200, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-      );
-    } catch (err) {
-      console.error("[Worker] Unhandled error:", err.message);
-      return new Response(
-        JSON.stringify({ error: err.message || "Internal server error" }),
-        { status: 500, headers: { ...corsHeaders(), "Content-Type": "application/json" } }
-      );
     }
+    if (path === "/cron/process" && request.method === "POST") {
+      try {
+        const queueResp = await supabaseFetch(
+          `/rest/v1/import_tasks?status=eq.queued&order=created_at.asc&limit=1&select=*`,
+          "GET",
+          null,
+          key
+        );
+        if (!queueResp.ok) {
+          return new Response(JSON.stringify({ processed: false }), {
+            status: 200,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const queue = await queueResp.json();
+        if (!queue.length) {
+          return new Response(JSON.stringify({ processed: false }), {
+            status: 200,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const task = queue[0];
+        console.log("[Worker] Processing task:", task.id);
+        await supabaseFetch(`/rest/v1/import_tasks?id=eq.${task.id}`, "PATCH", {
+          status: "processing"
+        }, key);
+        const messages = [{ role: "system", content: SYSTEM_PROMPT }];
+        if (task.image_base64) {
+          messages.push({
+            role: "user",
+            content: [
+              { type: "image_url", image_url: { url: task.image_base64 } },
+              {
+                type: "text",
+                text: task.url ? `Lien: ${task.url}
+Analyse cette image et cherche les infos.` : `Analyse cette image de produit sur les plateformes chinoises.`
+              }
+            ]
+          });
+        } else {
+          messages.push({
+            role: "user",
+            content: `Lien: ${task.url}
+Analyse ce produit sur les plateformes chinoises.`
+          });
+        }
+        const kimiResp = await fetch(KIMI_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${env.KIMI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: "kimi-k2.6",
+            messages,
+            temperature: 1,
+            max_tokens: 4096
+          })
+        });
+        if (!kimiResp.ok) {
+          const kimiError = await kimiResp.text();
+          console.error("[Worker] Kimi error:", kimiResp.status, kimiError);
+          await supabaseFetch(`/rest/v1/import_tasks?id=eq.${task.id}`, "PATCH", {
+            status: "error",
+            error: `Kimi API ${kimiResp.status}: ${kimiError.substring(0, 500)}`
+          }, key);
+          return new Response(JSON.stringify({ processed: true, status: "error" }), {
+            status: 200,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const kimiData = await kimiResp.json();
+        const message = kimiData.choices?.[0]?.message;
+        const rawContent = message?.content || message?.reasoning_content || "";
+        if (!rawContent) {
+          await supabaseFetch(`/rest/v1/import_tasks?id=eq.${task.id}`, "PATCH", {
+            status: "error",
+            error: "Empty response from Kimi"
+          }, key);
+          return new Response(JSON.stringify({ processed: true, status: "error" }), {
+            status: 200,
+            headers: { ...corsHeaders(), "Content-Type": "application/json" }
+          });
+        }
+        const productData = parseJsonFromResponse(rawContent);
+        const product = {
+          name: productData.name || "Produit AI",
+          slug: slugify(productData.name || `ai-${Date.now()}`),
+          category: productData.category || "tech",
+          images: productData.images || [],
+          badge: productData.badge || null,
+          badge_color: productData.badge_color || null,
+          description: productData.description || "Description en cours.",
+          retail_price: productData.retail_price || 5e3,
+          wholesale_price: productData.wholesale_price || 3e3,
+          min_retail: productData.min_retail || 1,
+          min_wholesale: productData.min_wholesale || 10,
+          suggested_sell_price: productData.suggested_sell_price || 8e3,
+          weight_kg: productData.weight_kg || 0.5,
+          dimensions: productData.dimensions || "10x50x40",
+          rating: productData.rating || 4,
+          reviews: productData.reviews || 0,
+          trending: productData.trending || false,
+          status: "draft"
+        };
+        let insertResp = await supabaseFetch("/rest/v1/products", "POST", product, key);
+        if (!insertResp.ok) {
+          const errBody = await insertResp.text();
+          if (insertResp.status === 409) {
+            product.slug = `${product.slug}-${Date.now()}`;
+            insertResp = await supabaseFetch("/rest/v1/products", "POST", product, key);
+          }
+          if (!insertResp.ok) {
+            const finalErr = await insertResp.text();
+            console.error("[Worker] Insert failed:", finalErr);
+            await supabaseFetch(`/rest/v1/import_tasks?id=eq.${task.id}`, "PATCH", {
+              status: "error",
+              error: `Insert failed: ${finalErr.substring(0, 300)}`
+            }, key);
+            return new Response(JSON.stringify({ processed: true, status: "error" }), {
+              status: 200,
+              headers: { ...corsHeaders(), "Content-Type": "application/json" }
+            });
+          }
+        }
+        const inserted = await insertResp.json();
+        await supabaseFetch(`/rest/v1/import_tasks?id=eq.${task.id}`, "PATCH", {
+          status: "completed",
+          result: { product: inserted[0] }
+        }, key);
+        console.log("[Worker] Task completed:", task.id);
+        return new Response(JSON.stringify({ processed: true, status: "completed" }), {
+          status: 200,
+          headers: { ...corsHeaders(), "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        console.error("[Worker] Cron error:", err.message);
+        return new Response(JSON.stringify({ processed: false, error: err.message }), {
+          status: 500,
+          headers: { ...corsHeaders(), "Content-Type": "application/json" }
+        });
+      }
+    }
+    return new Response(JSON.stringify({ error: "Not found" }), {
+      status: 404,
+      headers: { ...corsHeaders(), "Content-Type": "application/json" }
+    });
   }
 };
 

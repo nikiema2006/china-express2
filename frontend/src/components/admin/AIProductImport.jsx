@@ -1,32 +1,42 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Link2, Sparkles, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Upload, Link2, Sparkles, Loader2, CheckCircle, AlertCircle, X, Trash2 } from 'lucide-react';
 import { kimiService } from '@/services/kimi';
 
 const STATUS = {
-  IDLE: 'idle',
+  QUEUED: 'queued',
   PROCESSING: 'processing',
   IMPORTED: 'imported',
   ERROR: 'error',
 };
 
+function createTask(url, imageBase64) {
+  return {
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    taskId: null,
+    url,
+    imageBase64,
+    status: STATUS.QUEUED,
+    result: null,
+    error: null,
+  };
+}
+
 export default function AIProductImport() {
   const [url, setUrl] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [imageBase64, setImageBase64] = useState(null);
-  const [status, setStatus] = useState(STATUS.IDLE);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+  const [queue, setQueue] = useState([]);
   const fileInputRef = useRef(null);
+  const processingRef = useRef(false);
 
   const handleImageUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const res = ev.target?.result;
-      setImagePreview(res);
-      setImageBase64(res);
+      setImagePreview(ev.target?.result);
+      setImageBase64(ev.target?.result);
     };
     reader.readAsDataURL(file);
   }, []);
@@ -43,30 +53,100 @@ export default function AIProductImport() {
     reader.readAsDataURL(file);
   }, []);
 
-  const handleClear = () => {
+  const addToQueue = () => {
+    if (!url.trim() && !imageBase64) return;
+    setQueue((prev) => [...prev, createTask(url.trim(), imageBase64)]);
     setUrl('');
     setImagePreview(null);
     setImageBase64(null);
-    setStatus(STATUS.IDLE);
-    setResult(null);
-    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSubmit = async () => {
-    if (!url.trim() && !imageBase64) return;
-    setStatus(STATUS.PROCESSING);
-    setResult(null);
-    setError(null);
-
-    try {
-      const data = await kimiService.analyzeAndImport(url.trim(), imageBase64);
-      setResult(data.product);
-      setStatus(STATUS.IMPORTED);
-    } catch (err) {
-      setError(err.message || "Erreur inconnue");
-      setStatus(STATUS.ERROR);
-    }
+  const removeTask = (taskId) => {
+    setQueue((prev) => prev.filter((t) => t.id !== taskId));
   };
+
+  // Auto-process queue with async task polling
+  const queueRef = useRef(queue);
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
+  useEffect(() => {
+    if (processingRef.current) return;
+    const currentQueue = queueRef.current;
+    const nextTask = currentQueue.find((t) => t.status === STATUS.QUEUED);
+    if (!nextTask) return;
+
+    processingRef.current = true;
+
+    // Submit task to worker
+    kimiService
+      .submitTask(nextTask.url, nextTask.imageBase64)
+      .then((taskId) => {
+        // Update local task with remote task_id and set to processing
+        setQueue((prev) =>
+          prev.map((t) =>
+            t.id === nextTask.id ? { ...t, taskId, status: STATUS.PROCESSING } : t
+          )
+        );
+        
+        // Start polling
+        const pollInterval = setInterval(async () => {
+          try {
+            const taskData = await kimiService.pollTask(taskId);
+            
+            if (taskData.status === 'completed') {
+              clearInterval(pollInterval);
+              setQueue((prev) =>
+                prev.map((t) =>
+                  t.id === nextTask.id
+                    ? { ...t, status: STATUS.IMPORTED, result: taskData.result?.product || taskData.result }
+                    : t
+                )
+              );
+              processingRef.current = false;
+            } else if (taskData.status === 'error' || taskData.status === 'failed') {
+              clearInterval(pollInterval);
+              setQueue((prev) =>
+                prev.map((t) =>
+                  t.id === nextTask.id
+                    ? { ...t, status: STATUS.ERROR, error: taskData.error || 'Erreur inconnue' }
+                    : t
+                )
+              );
+              processingRef.current = false;
+            }
+          } catch (err) {
+            clearInterval(pollInterval);
+            setQueue((prev) =>
+              prev.map((t) =>
+                t.id === nextTask.id
+                  ? { ...t, status: STATUS.ERROR, error: err.message || 'Erreur de polling' }
+                  : t
+              )
+            );
+            processingRef.current = false;
+          }
+        }, 3000);
+      })
+      .catch((err) => {
+        setQueue((prev) =>
+          prev.map((t) =>
+            t.id === nextTask.id
+              ? { ...t, status: STATUS.ERROR, error: err.message || 'Erreur lors de la soumission' }
+              : t
+          )
+        );
+        processingRef.current = false;
+      });
+  }, [queue]);
+
+  const queuedCount = queue.filter((t) => t.status === STATUS.QUEUED).length;
+  const processingCount = queue.filter((t) => t.status === STATUS.PROCESSING).length;
+  const importedCount = queue.filter((t) => t.status === STATUS.IMPORTED).length;
+  const errorCount = queue.filter((t) => t.status === STATUS.ERROR).length;
+  const canSubmit = url.trim() || imageBase64;
 
   return (
     <div className="space-y-5">
@@ -77,7 +157,7 @@ export default function AIProductImport() {
           Import AI de produit
         </h3>
         <p className="text-sm text-[#5C5854] mb-5">
-          Colle un lien Pinduoduo, Taobao, Alibaba, AliExpress, 1688 ou upload une photo. L'IA analysera et importera automatiquement en brouillon.
+          Colle un lien ou upload une photo. L'IA analysera et importera automatiquement en brouillon. Tu peux en ajouter plusieurs à la suite.
         </p>
 
         <div className="space-y-4">
@@ -130,86 +210,139 @@ export default function AIProductImport() {
             )}
           </div>
 
-          {/* Submit button */}
+          {/* Queue button */}
           <button
-            onClick={handleSubmit}
-            disabled={!url.trim() && !imageBase64 || status === STATUS.PROCESSING}
+            onClick={addToQueue}
+            disabled={!canSubmit}
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#B8941E] to-[#8C6E15] text-white rounded-lg font-semibold hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {status === STATUS.PROCESSING ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Analyse et import en cours...
-              </>
-            ) : (
-              <>
-                <Sparkles size={18} />
-                Analyser et importer
-              </>
-            )}
+            <Upload size={18} />
+            Ajouter à la file ({queuedCount + processingCount} en attente)
           </button>
         </div>
       </div>
 
-      {/* Status card */}
+      {/* Queue status */}
       <AnimatePresence>
-        {status === STATUS.IMPORTED && result && (
+        {queue.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl border border-[#1F6B23]/30 p-5 md:p-6"
+            className="bg-white rounded-xl border border-[#B8941E]/20 p-5 md:p-6"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle size={20} className="text-[#1F6B23]" />
-              <h4 className="font-display text-lg text-[#1F6B23]">Produit importé en brouillon</h4>
-            </div>
-            <div className="space-y-3 text-sm">
-              <p className="font-medium text-[#1A1515]">{result.name}</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="bg-[#F7F5F2] rounded px-3 py-2">
-                  <span className="text-[#5C5854] text-xs">Prix détail</span>
-                  <p className="font-semibold">{result.retail_price?.toLocaleString()} FCFA</p>
-                </div>
-                <div className="bg-[#F7F5F2] rounded px-3 py-2">
-                  <span className="text-[#5C5854] text-xs">Prix gros</span>
-                  <p className="font-semibold">{result.wholesale_price?.toLocaleString()} FCFA</p>
-                </div>
-                <div className="bg-[#F7F5F2] rounded px-3 py-2">
-                  <span className="text-[#5C5854] text-xs">Catégorie</span>
-                  <p className="font-semibold capitalize">{result.category}</p>
-                </div>
-                <div className="bg-[#F7F5F2] rounded px-3 py-2">
-                  <span className="text-[#5C5854] text-xs">Badge</span>
-                  <p className="font-semibold">{result.badge || '—'}</p>
-                </div>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-display text-lg text-[#1A1515]">
+                File d'attente ({queue.length})
+              </h4>
+              <div className="flex gap-2 text-xs">
+                {processingCount > 0 && (
+                  <span className="flex items-center gap-1 text-[#B8941E]">
+                    <Loader2 size={12} className="animate-spin" /> {processingCount} en cours
+                  </span>
+                )}
+                {queuedCount > 0 && (
+                  <span className="text-[#5C5854]">{queuedCount} en attente</span>
+                )}
+                {importedCount > 0 && (
+                  <span className="text-[#1F6B23]">{importedCount} importés</span>
+                )}
+                {errorCount > 0 && (
+                  <span className="text-[#C8102E]">{errorCount} erreurs</span>
+                )}
               </div>
-              <button
-                onClick={handleClear}
-                className="mt-2 text-xs text-[#B8941E] hover:text-[#8C6E15] transition-colors"
-              >
-                Importer un autre produit
-              </button>
             </div>
-          </motion.div>
-        )}
 
-        {status === STATUS.ERROR && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl border border-[#C8102E]/30 p-5 md:p-6"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle size={20} className="text-[#C8102E]" />
-              <h4 className="font-display text-lg text-[#C8102E]">Erreur</h4>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              <AnimatePresence>
+                {queue.map((task) => (
+                  <motion.div
+                    key={task.id}
+                    layout
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className={`rounded-lg border p-3 ${
+                      task.status === STATUS.IMPORTED
+                        ? 'border-[#1F6B23]/30 bg-[#1F6B23]/5'
+                        : task.status === STATUS.ERROR
+                        ? 'border-[#C8102E]/30 bg-[#C8102E]/5'
+                        : task.status === STATUS.PROCESSING
+                        ? 'border-[#B8941E]/30 bg-[#B8941E]/5'
+                        : 'border-[#1A1515]/10 bg-[#F7F5F2]'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 shrink-0">
+                        {task.status === STATUS.QUEUED && (
+                          <span className="text-[#5C5854] text-xs">⏳</span>
+                        )}
+                        {task.status === STATUS.PROCESSING && (
+                          <Loader2 size={16} className="text-[#B8941E] animate-spin" />
+                        )}
+                        {task.status === STATUS.IMPORTED && (
+                          <CheckCircle size={16} className="text-[#1F6B23]" />
+                        )}
+                        {task.status === STATUS.ERROR && (
+                          <AlertCircle size={16} className="text-[#C8102E]" />
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium">
+                          {task.status === STATUS.QUEUED && 'En file d\'attente'}
+                          {task.status === STATUS.PROCESSING && 'Analyse en cours...'}
+                          {task.status === STATUS.IMPORTED && (
+                            <span className="text-[#1F6B23]">Importé — {task.result?.name || 'Produit'}</span>
+                          )}
+                          {task.status === STATUS.ERROR && (
+                            <span className="text-[#C8102E]">{task.error}</span>
+                          )}
+                        </p>
+                        {task.url && (
+                          <p className="text-[10px] text-[#5C5854] truncate mt-0.5">
+                            <Link2 size={8} className="inline mr-0.5" />{task.url}
+                          </p>
+                        )}
+                        {task.imageBase64 && (
+                          <p className="text-[10px] text-[#5C5854] mt-0.5">
+                            <Upload size={8} className="inline mr-0.5" />Image uploadée
+                          </p>
+                        )}
+                      </div>
+
+                      {(task.status === STATUS.QUEUED || task.status === STATUS.ERROR || task.status === STATUS.IMPORTED) && (
+                        <button
+                          onClick={() => removeTask(task.id)}
+                          className="p-1 rounded text-[#5C5854] hover:text-[#C8102E] hover:bg-[#C8102E]/10 transition-colors shrink-0"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
-            <p className="text-sm text-[#5C5854]">{error}</p>
-            <button
-              onClick={handleClear}
-              className="mt-3 text-xs text-[#B8941E] hover:text-[#8C6E15] transition-colors"
-            >
-              Réessayer
-            </button>
+
+            {/* Clear buttons */}
+            <div className="flex gap-4 mt-3">
+              {importedCount > 0 || errorCount > 0 ? (
+                <button
+                  onClick={() => setQueue((prev) => prev.filter((t) => t.status === STATUS.QUEUED || t.status === STATUS.PROCESSING))}
+                  className="text-xs text-[#5C5854] hover:text-[#B8941E] transition-colors"
+                >
+                  Effacer les terminés
+                </button>
+              ) : null}
+              {queue.length > 0 && (
+                <button
+                  onClick={() => setQueue([])}
+                  className="text-xs text-[#C8102E] hover:text-[#A60D26] transition-colors"
+                >
+                  Tout effacer
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
