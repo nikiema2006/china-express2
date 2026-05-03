@@ -58,6 +58,7 @@ const SECTIONS = {
       { key: 'reviews', label: 'Reviews', type: 'number' },
       { key: 'trending', label: 'Trending', type: 'boolean' },
       { key: 'status', label: 'Status', type: 'select', options: [{ value: 'draft', label: 'Draft' }, { value: 'published', label: 'Published' }] },
+      { key: 'product_url', label: 'Product Source URL', type: 'text' },
     ],
   },
   shipping: {

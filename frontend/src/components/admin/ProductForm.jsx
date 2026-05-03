@@ -383,6 +383,7 @@ export default function ProductForm({ fields, data, onSubmit, onCancel, loading 
       if (productData.dimensions) newValues.dimensions = productData.dimensions;
       if (productData.rating) newValues.rating = productData.rating;
       if (productData.reviews !== undefined) newValues.reviews = productData.reviews;
+      if (productData.url) newValues.product_url = productData.url;
 
       setValues(newValues);
     } catch (err) {

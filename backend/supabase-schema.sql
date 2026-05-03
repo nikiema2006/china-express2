@@ -29,6 +29,7 @@ CREATE TABLE products (
   reviews INTEGER NOT NULL,
   trending BOOLEAN NOT NULL DEFAULT false,
   status TEXT NOT NULL DEFAULT 'draft',
+  product_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

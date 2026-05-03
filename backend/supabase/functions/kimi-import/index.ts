@@ -612,6 +612,7 @@ serve(async (req) => {
       reviews: (productData.reviews as number) || 0,
       trending: (productData.trending as boolean) || false,
       status: 'draft',
+      product_url: (productData.url as string) || productUrl || null,
     }
 
     if (action === 'analyze') {

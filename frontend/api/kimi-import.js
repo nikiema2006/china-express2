@@ -13,6 +13,7 @@ const JSON_TEMPLATE = JSON.stringify({
   slug: 'slug-url-friendly',
   category: 'tech',
   images: ['https://example.com/img1.jpg'],
+  url: 'https://1688.com/offer/...',
   badge: 'TOP VENTE',
   badge_color: 'gold',
   description: 'Description marketing convaincante en français (150-250 mots)',
@@ -35,6 +36,7 @@ const IMAGE_ANALYSIS_PROMPT = `Analyse cette image de produit. Retourne UNIQUEME
   "slug": "string - slug en minuscules avec tirets",
   "category": "string: tech, maison, mode, beaute, outils",
   "images": ["url1"],
+  "url": "string|null - lien direct du produit sur la plateforme chinoise",
   "badge": "string|null: TOP VENTE, NOUVEAU, PROMO ou null",
   "badge_color": "string|null: gold, red, blue, green",
   "description": "string - description marketing courte 50-80 mots en français",
@@ -599,6 +601,7 @@ async function handler(req, res) {
       reviews: productData.reviews || 0,
       trending: productData.trending || false,
       status: 'draft',
+      product_url: productData.url || productUrl || null,
     };
 
     if (action === 'analyze') {
