@@ -274,7 +274,13 @@ serve(async (req) => {
     console.log(`[Kimi] Response received in ${elapsed}ms`)
 
     const message = kimiData.choices?.[0]?.message
-    const rawContent = (message?.content && message.content.trim()) || ''
+    let rawContent = (message?.content && message.content.trim()) || ''
+
+    // Fallback to reasoning_content if content is empty (common with kimi-k2.5)
+    if (!rawContent && message?.reasoning_content) {
+      rawContent = (message.reasoning_content as string).trim()
+      console.log('[Kimi] Using reasoning_content as fallback (content was empty)')
+    }
 
     if (!rawContent) {
       console.error('[Kimi] Empty response:', JSON.stringify(kimiData).substring(0, 500))
