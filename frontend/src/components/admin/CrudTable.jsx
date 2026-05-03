@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, Check } from 'lucide-react';
 
 const MAX_VISIBLE_COLUMNS = 5;
 
-export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, formatCellValue }) {
+export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, formatCellValue, onCopy, extraActions, renderCell }) {
   const visibleColumns = columns.slice(0, MAX_VISIBLE_COLUMNS);
   const hasOverflow = columns.length > MAX_VISIBLE_COLUMNS;
   const format = formatCellValue || ((v) => {
@@ -14,6 +15,45 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
     return String(v);
   });
 
+  const [copiedRowId, setCopiedRowId] = useState(null);
+
+  const handleCopy = (record) => {
+    if (onCopy) {
+      onCopy(record);
+      setCopiedRowId(record.id);
+      setTimeout(() => setCopiedRowId(null), 1500);
+    }
+  };
+
+  const actionButtons = (record) => (
+    <>
+      {onCopy && (
+        <button
+          onClick={(e) => { e.stopPropagation(); handleCopy(record); }}
+          className="p-2 rounded-md text-[#5C5854] hover:bg-[#5C5854]/10 transition-colors"
+          title="Copier les infos"
+        >
+          {copiedRowId === record.id ? <Check size={16} /> : <Copy size={16} />}
+        </button>
+      )}
+      <button
+        onClick={(e) => { e.stopPropagation(); onEdit(record); }}
+        className="p-2 rounded-md text-[#B8941E] hover:bg-[#B8941E]/10 transition-colors"
+        title="Modifier"
+      >
+        <Pencil size={16} />
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(record.id); }}
+        className="p-2 rounded-md text-[#C8102E] hover:bg-[#C8102E]/10 transition-colors"
+        title="Supprimer"
+      >
+        <Trash2 size={16} />
+      </button>
+      {extraActions && extraActions(record)}
+    </>
+  );
+
   return (
     <div className="bg-white rounded-xl border border-[#1A1515]/10 shadow-soft overflow-hidden">
       <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-[#1A1515]/8">
@@ -23,25 +63,24 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
           className="inline-flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-[#B8941E] text-white text-xs md:text-sm font-semibold hover:bg-[#B8941E]/90 transition-colors"
         >
           <Plus size={14} />
-          <span className="hidden sm:inline">Add New</span>
-          <span className="sm:hidden">Add</span>
+          <span className="hidden sm:inline">Ajouter</span>
+          <span className="sm:hidden">Ajouter</span>
         </button>
       </div>
 
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 px-4">
-          <p className="text-[#5C5854] text-sm">No records found</p>
+          <p className="text-[#5C5854] text-sm">Aucun enregistrement trouvé</p>
           <button
             onClick={onAdd}
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#B8941E] text-white text-sm font-semibold hover:bg-[#B8941E]/90 transition-colors"
           >
             <Plus size={16} />
-            Add your first record
+            Ajouter votre premier enregistrement
           </button>
         </div>
       ) : (
         <div className="md:overflow-x-auto overflow-hidden">
-          {/* Mobile: scrollable table body with fixed header */}
           <div className="md:hidden">
             <table className="w-full">
               <thead>
@@ -76,7 +115,7 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.2 }}
-                        className="border-b border-[#1A1515]/5"
+                        className="border-b border-[#1A1515]/5 hover:bg-[#B8941E]/3 transition-colors"
                       >
                         {visibleColumns.map((col) => (
                           <td
@@ -84,7 +123,7 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
                             className="px-3 py-2 text-xs text-[#1A1515] max-w-[100px] truncate"
                             title={String(record[col.key] ?? '')}
                           >
-                            {format(record[col.key])}
+                            {renderCell?.(record[col.key], col.key, record) ?? format(record[col.key])}
                           </td>
                         ))}
                         {hasOverflow && (
@@ -92,18 +131,7 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
                         )}
                         <td className="px-3 py-2 text-right">
                           <div className="inline-flex items-center gap-0.5">
-                            <button
-                              onClick={() => onEdit(record)}
-                              className="p-1.5 rounded text-[#B8941E] hover:bg-[#B8941E]/10 transition-colors"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              onClick={() => onDelete(record.id)}
-                              className="p-1.5 rounded text-[#C8102E] hover:bg-[#C8102E]/10 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            {actionButtons(record)}
                           </div>
                         </td>
                       </motion.tr>
@@ -114,7 +142,6 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
             </div>
           </div>
 
-          {/* Desktop: standard table */}
           <table className="hidden md:table w-full">
             <thead>
               <tr className="border-b border-[#1A1515]/8">
@@ -153,28 +180,15 @@ export default function CrudTable({ columns, data, onEdit, onDelete, onAdd, form
                         className="px-4 py-3 text-sm text-[#1A1515] max-w-[200px] truncate"
                         title={String(record[col.key] ?? '')}
                       >
-                        {format(record[col.key])}
+                        {renderCell?.(record[col.key], col.key, record) ?? format(record[col.key])}
                       </td>
                     ))}
                     {hasOverflow && (
                       <td className="px-4 py-3 text-sm text-[#5C5854]">...</td>
                     )}
                     <td className="px-4 py-3 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        <button
-                          onClick={() => onEdit(record)}
-                          className="p-2 rounded-md text-[#B8941E] hover:bg-[#B8941E]/10 transition-colors"
-                          title="Edit"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => onDelete(record.id)}
-                          className="p-2 rounded-md text-[#C8102E] hover:bg-[#C8102E]/10 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <div className="inline-flex items-center gap-1 justify-end">
+                        {actionButtons(record)}
                       </div>
                     </td>
                   </motion.tr>

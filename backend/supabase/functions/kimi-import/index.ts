@@ -25,14 +25,22 @@ Quand tu reçois un lien ou une image de produit, tu dois :
 4. Générer un argumentaire marketing convaincant en français (orienté revente en Afrique de l'Ouest)
 5. Estimer les prix de revente en FCFA (XOF)
 
-Retourne EXCLUSIVEMENT un objet JSON avec cette structure exacte :
-{
+Règles de prix en FCFA :
+- retail_price: prix fournisseur chinois trouvé x 1.5 à 2
+- wholesale_price: prix fournisseur chinois trouvé x 1.2 à 1.4
+- suggested_sell_price: retail_price x 1.3 à 1.5
+- min_retail: 1
+- min_wholesale: 10 à 50
+
+Catégories: tech, maison, mode, beaute, outils`
+
+const JSON_TEMPLATE = JSON.stringify({
   "name": "Nom du produit attractif en français",
   "slug": "slug-url-friendly",
-  "category": "tech|maison|mode|beaute|outils",
-  "images": ["url_image_1", "url_image_2"],
-  "badge": "TOP VENTE|NOUVEAU|PROMO -XX%|BEST DEAL" ou null,
-  "badge_color": "gold|red" ou null,
+  "category": "tech",
+  "images": ["https://example.com/img1.jpg"],
+  "badge": "TOP VENTE",
+  "badge_color": "gold",
   "description": "Description marketing convaincante en français (150-250 mots)",
   "retail_price": 12000,
   "wholesale_price": 7500,
@@ -44,16 +52,7 @@ Retourne EXCLUSIVEMENT un objet JSON avec cette structure exacte :
   "rating": 4.5,
   "reviews": 0,
   "trending": false
-}
-
-Règles de prix en FCFA :
-- retail_price: prix fournisseur chinois trouvé x 1.5 à 2
-- wholesale_price: prix fournisseur chinois trouvé x 1.2 à 1.4
-- suggested_sell_price: retail_price x 1.3 à 1.5
-- min_retail: 1
-- min_wholesale: 10 à 50
-
-Catégories: tech, maison, mode, beaute, outils`
+}, null, 2)
 
 function slugify(text: string): string {
   return text
@@ -70,27 +69,105 @@ function slugify(text: string): string {
 function parseJsonFromResponse(content: string): Record<string, unknown> {
   let jsonStr = content
 
-  // Strip markdown code blocks
+  // Step 1: Strip markdown code blocks
   const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/)
   if (codeBlockMatch) {
     jsonStr = codeBlockMatch[1].trim()
   }
 
-  // Try parsing directly
+  // Step 2: Try parsing directly
   try {
-    return JSON.parse(jsonStr)
-  } catch {
-    // Fallback: extract the first top-level JSON object
-    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0])
+    const parsed = JSON.parse(jsonStr)
+    if (typeof parsed === 'object' && parsed !== null && 'name' in parsed) {
+      return parsed
     }
-    throw new Error('No JSON found in response')
+  } catch {
+    // fallthrough
   }
+
+  // Step 3: Key-pattern extraction — find { that is followed by "name"
+  const expectedKeys = ['"name"', '"slug"', '"category"', '"description"', '"retail_price"']
+
+  for (let i = 0; i < jsonStr.length; i++) {
+    if (jsonStr[i] === '{') {
+      const snippet = jsonStr.substring(i, Math.min(i + 300, jsonStr.length))
+      const hasNameKey = expectedKeys.every((key) => snippet.includes(key))
+
+      if (hasNameKey) {
+        let depth = 0
+        let endIdx = -1
+        let inString = false
+        let escapeNext = false
+
+        for (let j = i; j < jsonStr.length; j++) {
+          const ch = jsonStr[j]
+
+          if (escapeNext) {
+            escapeNext = false
+            continue
+          }
+          if (ch === '\\') {
+            escapeNext = true
+            continue
+          }
+          if (ch === '"') {
+            inString = !inString
+            continue
+          }
+          if (!inString) {
+            if (ch === '{') depth++
+            if (ch === '}') {
+              depth--
+              if (depth === 0) {
+                endIdx = j
+                break
+              }
+            }
+          }
+        }
+
+        if (endIdx !== -1) {
+          const candidate = jsonStr.substring(i, endIdx + 1)
+          try {
+            const parsed = JSON.parse(candidate)
+            if (typeof parsed === 'object' && parsed !== null) {
+              return parsed
+            }
+          } catch {
+            // try next candidate
+          }
+        }
+      }
+    }
+  }
+
+  // Step 4: Fallback — brace depth scan
+  let depth = 0
+  let startIdx = -1
+  for (let i = 0; i < jsonStr.length; i++) {
+    if (jsonStr[i] === '{') {
+      if (depth === 0) startIdx = i
+      depth++
+    } else if (jsonStr[i] === '}') {
+      depth--
+      if (depth === 0 && startIdx !== -1) {
+        const candidate = jsonStr.substring(startIdx, i + 1)
+        try {
+          const parsed = JSON.parse(candidate)
+          if (typeof parsed === 'object' && parsed !== null && 'name' in parsed) {
+            return parsed
+          }
+        } catch {
+          // continue
+        }
+      }
+    }
+  }
+
+  throw new Error(`No JSON found in response. Raw: ${content.substring(0, 300)}`)
 }
 
 serve(async (req) => {
-  // CORS handling
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -103,10 +180,15 @@ serve(async (req) => {
   }
 
   try {
-    const { url, imageBase64 } = await req.json()
+    const url = new URL(req.url)
+    const action = url.searchParams.get('action') || 'import'
 
-    if (!url && !imageBase64) {
-      return new Response(JSON.stringify({ error: 'url or imageBase64 is required' }), {
+    const body = await req.json()
+    const { url: productUrl, imageBase64, imageBase64s } = body
+
+    const hasImages = imageBase64 || (imageBase64s && imageBase64s.length > 0)
+    if (!productUrl && !hasImages) {
+      return new Response(JSON.stringify({ error: 'url or image(s) required' }), {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
@@ -120,71 +202,93 @@ serve(async (req) => {
       { role: 'system', content: SYSTEM_PROMPT },
     ]
 
+    const imageList: Array<{ type: string; image_url: { url: string } }> = []
+
     if (imageBase64) {
-      messages.push({
-        role: 'user',
-        content: [
-          { type: 'image_url', image_url: { url: imageBase64 } },
-          {
-            type: 'text',
-            text: url
-              ? `Lien du produit: ${url}\nAnalyse cette image et cherche les infos sur les plateformes chinoises.`
-              : `Analyse cette image de produit et cherche les informations sur les plateformes chinoises (Taobao, Pinduoduo, 1688, Alibaba, etc.).`,
-          },
-        ],
+      imageList.push({ type: 'image_url', image_url: { url: imageBase64 } })
+    }
+    if (imageBase64s && Array.isArray(imageBase64s)) {
+      for (const img of imageBase64s) {
+        imageList.push({ type: 'image_url', image_url: { url: img } })
+      }
+    }
+
+    const jsonInstructionWithUrl = `Lien: ${productUrl}\n\nAnalyse ce produit et retourne la réponse FINALE sous forme de cet objet JSON exact (sans aucun texte avant ou après le JSON, pas de markdown, pas de backtick code blocks):\n` + JSON_TEMPLATE
+    const jsonInstructionNoUrl = `Analyse ce produit et retourne la réponse FINALE sous forme de cet objet JSON exact (sans aucun texte avant ou après le JSON, pas de markdown, pas de backtick code blocks):\n` + JSON_TEMPLATE
+
+    if (imageList.length > 0) {
+      const contentParts: Array<{ type: string; text?: string; image_url?: unknown }> = []
+      for (const img of imageList) {
+        contentParts.push(img)
+      }
+      contentParts.push({
+        type: 'text',
+        text: productUrl ? jsonInstructionWithUrl : jsonInstructionNoUrl,
       })
+      messages.push({ role: 'user', content: contentParts })
     } else {
       messages.push({
         role: 'user',
-        content: `Lien du produit: ${url}\nAnalyse ce produit en faisant une recherche sur les plateformes chinoises et retourne les données pour le catalogue.`,
+        content: jsonInstructionWithUrl,
       })
     }
 
-    // Build request body (no response_format with kimi-k2.6 + images)
-    const body: Record<string, unknown> = {
-      model: 'kimi-k2.6',
+    // Model selection based on input type:
+    // - URL-only (web search): kimi-k2.6 with temperature:1, top_p:0.95 (reasoning model)
+    // - Images: kimi-k2.5 with temperature:0.7, top_p:0.9 (supports images + returns content field)
+    // kimi-k2.6 has a bug with images: only produces reasoning_content, never content
+    // moonshot-v1-128k does NOT support image inputs
+    const isImageOnly = hasImages && !productUrl
+    const model = isImageOnly ? 'kimi-k2.5' : 'kimi-k2.6'
+
+    const kimiBody: Record<string, unknown> = {
+      model,
       messages,
       temperature: 1,
-      max_tokens: 4096,
+      max_tokens: 2048,
+      top_p: 0.95,
     }
 
-    console.log('[Kimi Edge] Calling Kimi API with model kimi-k2.6...')
+    console.log(`[Kimi] Calling API with model ${model}...`)
+    const startTime = Date.now()
     const kimiResp = await fetch(KIMI_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${KIMI_API_KEY}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(kimiBody),
     })
 
     if (!kimiResp.ok) {
       const kimiErrorBody = await kimiResp.text()
-      console.error('[Kimi Edge] Kimi API error:', kimiResp.status, kimiErrorBody)
+      console.error('[Kimi] API error:', kimiResp.status, kimiErrorBody)
       return new Response(
-        JSON.stringify({ error: `Kimi API error ${kimiResp.status}: ${kimiErrorBody.substring(0, 200)}` }),
+        JSON.stringify({ error: `API error ${kimiResp.status}: ${kimiErrorBody.substring(0, 200)}` }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       )
     }
 
     const kimiData = await kimiResp.json()
+    const elapsed = Date.now() - startTime
+    console.log(`[Kimi] Response received in ${elapsed}ms`)
+
     const message = kimiData.choices?.[0]?.message
-    const rawContent = message?.content || message?.reasoning_content || ''
+    const rawContent = (message?.content && message.content.trim()) || ''
 
     if (!rawContent) {
-      console.error('[Kimi Edge] Empty response from Kimi:', JSON.stringify(kimiData).substring(0, 500))
+      console.error('[Kimi] Empty response:', JSON.stringify(kimiData).substring(0, 500))
       return new Response(
-        JSON.stringify({ error: 'Empty response from Kimi AI' }),
+        JSON.stringify({ error: 'Empty response from AI' }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       )
     }
 
-    console.log('[Kimi Edge] Kimi response received, parsing JSON...')
+    console.log('[Kimi] Raw response preview:', rawContent.substring(0, 500))
+    console.log('[Kimi] Parsing JSON...')
 
-    // Parse JSON
     const productData = parseJsonFromResponse(rawContent) as Record<string, unknown>
 
-    // Prepare product for insertion
     const product = {
       name: (productData.name as string) || 'Produit AI',
       slug: slugify((productData.name as string) || `ai-${Date.now()}`),
@@ -206,8 +310,15 @@ serve(async (req) => {
       status: 'draft',
     }
 
-    // Insert into Supabase
-    console.log('[Kimi Edge] Inserting product into Supabase...')
+    if (action === 'analyze') {
+      console.log('[Kimi] Analyze mode: returning product data')
+      return new Response(
+        JSON.stringify({ success: true, product }),
+        { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
+      )
+    }
+
+    console.log('[Kimi] Import mode: inserting product into Supabase...')
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const { data: insertedProduct, error: insertError } = await supabase
       .from('products')
@@ -216,7 +327,6 @@ serve(async (req) => {
       .single()
 
     if (insertError) {
-      // If slug conflict, add timestamp and retry
       if (insertError.code === '23505') {
         product.slug = `${product.slug}-${Date.now()}`
         const { data: retryProduct, error: retryError } = await supabase
@@ -226,33 +336,33 @@ serve(async (req) => {
           .single()
 
         if (retryError) {
-          console.error('[Kimi Edge] Insert retry failed:', retryError)
+          console.error('[Kimi] Insert retry failed:', retryError)
           return new Response(
             JSON.stringify({ error: `Insert failed: ${retryError.message}` }),
             { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
           )
         }
-        console.log('[Kimi Edge] Product imported successfully (retry)')
+        console.log('[Kimi] Product imported successfully (retry)')
         return new Response(
           JSON.stringify({ success: true, product: retryProduct }),
           { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
         )
       }
 
-      console.error('[Kimi Edge] Insert failed:', insertError)
+      console.error('[Kimi] Insert failed:', insertError)
       return new Response(
         JSON.stringify({ error: `Insert failed: ${insertError.message}` }),
         { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
       )
     }
 
-    console.log('[Kimi Edge] Product imported successfully:', insertedProduct.name)
+    console.log('[Kimi] Product imported successfully:', insertedProduct.name)
     return new Response(
       JSON.stringify({ success: true, product: insertedProduct }),
       { status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
     )
   } catch (err) {
-    console.error('[Kimi Edge] Unhandled error:', err)
+    console.error('[Kimi] Unhandled error:', err)
     return new Response(
       JSON.stringify({ error: err.message || 'Internal server error' }),
       { status: 500, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }

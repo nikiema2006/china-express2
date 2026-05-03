@@ -1,18 +1,42 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TrendingUp, Sparkles } from "lucide-react";
-import { getTrendingProducts } from "../../data/products";
+import { ArrowRight, TrendingUp, Sparkles, Loader2 } from "lucide-react";
+import { getTrendingProducts } from "../../services/products";
 import { formatXOF } from "../../lib/format";
 
 export default function HeroCarousel() {
-  const slides = useMemo(() => getTrendingProducts().slice(0, 4), []);
+  const [slides, setSlides] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    async function fetchSlides() {
+      try {
+        const data = await getTrendingProducts();
+        setSlides(data.slice(0, 4));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSlides();
+  }, []);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
     const id = setInterval(() => setIndex((prev) => (prev + 1) % slides.length), 5500);
     return () => clearInterval(id);
   }, [slides.length]);
+
+  if (loading || slides.length === 0) {
+    return (
+      <section className="relative overflow-hidden h-[78vh] min-h-[540px] md:h-[88vh] md:min-h-[620px] bg-[#FDFBF7] flex items-center justify-center">
+        <Loader2 size={32} className="animate-spin text-[#B8941E]" />
+      </section>
+    );
+  }
 
   const current = slides[index];
 
@@ -93,8 +117,8 @@ export default function HeroCarousel() {
             transition={{ delay: 0.25 }}
             className="text-base md:text-lg text-[#5C5854] leading-relaxed max-w-xl"
           >
-            {current.description}
-            <span className="text-[#1A1515] font-medium"> Le Made in China devient Made for You.</span>
+            {current.description?.slice(0, 100) + "..." || "Aucune description disponible"}
+           
           </motion.p>
 
           {/* Price */}

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { adminService } from '@/services/admin';
 import CrudTable from '@/components/admin/CrudTable';
-import CrudForm from '@/components/admin/CrudForm';
+import ProductForm from '@/components/admin/ProductForm';
 import AIProductImport from '@/components/admin/AIProductImport';
 
 const LOGO = "https://customer-assets.emergentagent.com/job_china-africa-trade-1/artifacts/gm0lbsx0_logochinaexpress-removebg-preview.png";
@@ -44,7 +44,6 @@ const SECTIONS = {
       { key: 'name', label: 'Name', type: 'text', required: true },
       { key: 'slug', label: 'Slug', type: 'text', required: true },
       { key: 'category', label: 'Category', type: 'text' },
-      { key: 'images', label: 'Images (one URL per line)', type: 'array' },
       { key: 'badge', label: 'Badge', type: 'text' },
       { key: 'badge_color', label: 'Badge Color', type: 'text' },
       { key: 'description', label: 'Description', type: 'textarea' },
@@ -270,7 +269,7 @@ export default function AdminDashboard() {
     if (key === 'status') {
       return value;
     }
-    if (value === null || value === undefined) return '\u2014';
+    if (value === null || value === undefined) return '—';
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     if (Array.isArray(value)) return `${value.length} item(s)`;
     if (typeof value === 'object') return JSON.stringify(value).substring(0, 50);
@@ -292,9 +291,25 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleCopyProduct = (record) => {
+    const text = [
+      `📦 Nom: ${record.name || 'N/A'}`,
+      `🔗 Slug: ${record.slug || 'N/A'}`,
+      `📁 Catégorie: ${record.category || 'N/A'}`,
+      `📝 Description: ${record.description || 'N/A'}`,
+      `💰 Prix détail: ${record.retail_price || 'N/A'} FCFA`,
+      `💰 Prix gros: ${record.wholesale_price || 'N/A'} FCFA`,
+      `💡 Prix de revente conseillé: ${record.suggested_sell_price || 'N/A'} FCFA`,
+      `⭐ Rating: ${record.rating || 'N/A'}/5 (${record.reviews || 0} avis)`,
+      `📸 Images: ${Array.isArray(record.images) ? record.images.length : 0} image(s)`,
+      `📊 Statut: ${record.status || 'N/A'}`,
+    ].join('\n');
+
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F5F2]">
-      {/* Admin header */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#B8941E]/15">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -324,7 +339,6 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 bg-white border-r border-[#B8941E]/20 flex-col fixed h-full top-16 md:top-20">
         <nav className="flex-1 p-4 space-y-1">
           {Object.entries(SECTIONS).map(([key, { label, icon: Icon }]) => {
@@ -347,7 +361,6 @@ export default function AdminDashboard() {
         </nav>
       </aside>
 
-      {/* Mobile tab bar */}
       <div className="md:hidden sticky top-16 z-40 bg-white/90 backdrop-blur-xl border-b border-[#1A1515]/8">
         <div className="flex overflow-x-auto scrollbar-hide px-2 py-2 gap-1.5">
           {Object.entries(SECTIONS).map(([key, { label, icon: Icon }]) => {
@@ -370,7 +383,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Main content */}
       <main className="md:ml-64 p-4 md:p-8">
         {activeSection === 'products' && (
           <div className="mb-8">
@@ -388,7 +400,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Status filter (products only) */}
         {activeSection === 'products' && (
           <div className="flex gap-2 mb-4">
             {STATUS_FILTERS.map((f) => (
@@ -407,7 +418,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Search bar */}
         <div className="mb-6">
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5C5854]" />
@@ -443,9 +453,10 @@ export default function AdminDashboard() {
             formatCellValue={formatCellValue}
             renderCell={(value, key, record) => {
               if (key === 'status') return renderStatusBadge(value);
-              if (key === 'trending') return value ? '\u2B50' : '\u2014';
+              if (key === 'trending') return value ? '⭐' : '—';
               return null;
             }}
+            onCopy={activeSection === 'products' ? handleCopyProduct : undefined}
             extraActions={activeSection === 'products' ? (record) => (
               <button
                 onClick={() => (record.status === 'published' ? handleUnpublish(record.id) : handlePublish(record.id))}
@@ -465,7 +476,7 @@ export default function AdminDashboard() {
 
       <AnimatePresence>
         {formOpen && (
-          <CrudForm
+          <ProductForm
             fields={section.formFields}
             data={editingRecord}
             onSubmit={handleSubmit}
