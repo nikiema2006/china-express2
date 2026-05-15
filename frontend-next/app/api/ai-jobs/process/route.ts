@@ -9,7 +9,7 @@ const supabase = createClient(
 const KIMI_API_KEY = process.env.KIMI_API_KEY;
 const KIMI_API_URL = process.env.KIMI_API_URL || 'https://api.moonshot.cn/v1';
 
-const SYSTEM_PROMPT = `Tu es un expert en import Chine-Afrique. Analyse le produit et retourne UNIQUEMENT un JSON valide avec ces champs:
+const SYSTEM_PROMPT = `Tu es un expert en import Chine-Afrique. Analyse le produit et retourne UNIQUEMENT un JSON valide avec ces champs exacts:
 - name: nom du produit en français
 - slug: slug URL-friendly (minuscule, tirets)
 - category: catégorie appropriée
@@ -17,12 +17,16 @@ const SYSTEM_PROMPT = `Tu es un expert en import Chine-Afrique. Analyse le produ
 - retail_price: prix de détail estimé en FCFA
 - wholesale_price: prix de gros estimé en FCFA
 - suggested_sell_price: prix de revente conseillé en FCFA
+- min_retail: quantité minimum pour prix détail
+- min_wholesale: quantité minimum pour prix gros
 - weight_kg: poids estimé en kg
+- dimensions: dimensions du produit (ex: "30x20x10 cm")
 - badge: badge marketing (ex: "Nouveau", "Hot", "Promo")
-- badge_color: couleur du badge (ex: "#C8102E")
+- badge_color: couleur du badge hex (ex: "#C8102E")
 - rating: note estimée sur 5
 - reviews: nombre d'avis estimé
-- url: URL source si fournie
+- url: URL source du produit
+- images: array d'URLs d'images si visibles
 
 Retourne UNIQUEMENT le JSON, rien d'autre.`;
 
@@ -82,8 +86,27 @@ async function callKimiAPI(imageBase64s: string[], url: string = '') {
 
 async function importProductToSupabase(product: any) {
   const productData = {
-    ...product,
+    name: product.name || 'Produit sans nom',
+    slug: product.slug || product.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || `produit-${Date.now()}`,
+    category: product.category || null,
+    description: product.description || null,
+    badge: product.badge || null,
+    badge_color: product.badge_color || null,
+    retail_price: product.retail_price || null,
+    wholesale_price: product.wholesale_price || null,
+    suggested_sell_price: product.suggested_sell_price || null,
+    min_retail: product.min_retail || null,
+    min_wholesale: product.min_wholesale || null,
+    weight_kg: product.weight_kg || null,
+    dimensions: product.dimensions || null,
+    volume_per_lot: product.volume_per_lot || null,
+    lot_size: product.lot_size || null,
+    rating: product.rating || null,
+    reviews: product.reviews || 0,
+    trending: false,
     status: 'draft',
+    product_url: product.url || null,
+    images: product.images || [],
     created_at: new Date().toISOString(),
   };
 
