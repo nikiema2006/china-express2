@@ -58,8 +58,8 @@ async function callKimiAPI(imageBase64s: string[], url: string = '') {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content },
       ],
-      temperature: 0.3,
-      max_tokens: 2000,
+      temperature: 1,
+      max_tokens: 45000,
     }),
   });
 
