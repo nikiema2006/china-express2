@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #FDFBF7;
+    color: #1A1515;
+}
+
+code, .font-mono {
+    font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
+}
+
+.font-display {
+    font-family: 'Fraunces', 'Playfair Display', serif;
+    font-variation-settings: 'opsz' 80, 'SOFT' 50, 'WONK' 0;
+    letter-spacing: -0.02em;
+}
+
+.font-body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+@layer base {
+    :root {
+        --background: 36 50% 98%;
+        --foreground: 12 10% 9%;
+        --card: 0 0% 100%;
+        --card-foreground: 12 10% 9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 12 10% 9%;
+        --primary: 351 78% 43%;
+        --primary-foreground: 36 50% 98%;
+        --secondary: 36 30% 94%;
+        --secondary-foreground: 12 10% 9%;
+        --muted: 36 30% 94%;
+        --muted-foreground: 24 5% 36%;
+        --accent: 41 78% 41%;
+        --accent-foreground: 36 50% 98%;
+        --destructive: 0 65% 39%;
+        --destructive-foreground: 36 50% 98%;
+        --border: 36 18% 86%;
+        --input: 36 18% 88%;
+        --ring: 41 78% 41%;
+        --chart-1: 41 78% 41%;
+        --chart-2: 351 78% 43%;
+        --chart-3: 12 10% 9%;
+        --chart-4: 24 5% 50%;
+        --chart-5: 36 18% 70%;
+        --radius: 0.85rem;
+    }
+    .dark {
+        --background: 0 0% 4%;
+        --foreground: 36 50% 98%;
+        --card: 12 17% 8%;
+        --card-foreground: 36 50% 98%;
+        --popover: 12 17% 8%;
+        --popover-foreground: 36 50% 98%;
+        --primary: 351 78% 43%;
+        --primary-foreground: 36 50% 98%;
+        --secondary: 12 17% 10%;
+        --secondary-foreground: 36 50% 98%;
+        --muted: 12 17% 10%;
+        --muted-foreground: 36 5% 62%;
+        --accent: 43 65% 52%;
+        --accent-foreground: 0 0% 4%;
+        --destructive: 0 65% 51%;
+        --destructive-foreground: 36 50% 98%;
+        --border: 36 5% 18%;
+        --input: 12 17% 10%;
+        --ring: 43 65% 52%;
+        --chart-1: 43 65% 52%;
+        --chart-2: 351 78% 43%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+::selection {
+    background-color: #B8941E;
+    color: #FDFBF7;
+}
+
+.glass {
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    background-color: rgba(253, 251, 247, 0.75);
+    border: 1px solid rgba(184, 148, 30, 0.18);
+}
+
+.glass-strong {
+    backdrop-filter: blur(28px) saturate(160%);
+    -webkit-backdrop-filter: blur(28px) saturate(160%);
+    background-color: rgba(253, 251, 247, 0.92);
+    border: 1px solid rgba(184, 148, 30, 0.22);
+}
+
+.text-gold-gradient {
+    background: linear-gradient(135deg, #C8A03B 0%, #B8941E 50%, #8C6E15 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glow-red {
+    box-shadow: 0 8px 26px -6px rgba(200, 16, 46, 0.45), 0 0 0 1px rgba(200, 16, 46, 0.1);
+}
+.glow-gold {
+    box-shadow: 0 8px 26px -6px rgba(184, 148, 30, 0.4), 0 0 0 1px rgba(184, 148, 30, 0.1);
+}
+
+.shadow-soft {
+    box-shadow: 0 1px 2px rgba(26, 21, 21, 0.04), 0 8px 24px -8px rgba(26, 21, 21, 0.08);
+}
+.shadow-elev {
+    box-shadow: 0 2px 4px rgba(26, 21, 21, 0.06), 0 16px 40px -12px rgba(26, 21, 21, 0.18);
+}
+
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.bottom-safe {
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+}
+
+*:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #B8941E;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+    animation: marquee 35s linear infinite;
+}
+
+@keyframes phoenix-pulse {
+    0%, 100% { opacity: 0.10; transform: scale(1); }
+    50% { opacity: 0.16; transform: scale(1.03); }
+}
+.animate-phoenix {
+    animation: phoenix-pulse 6s ease-in-out infinite;
+}

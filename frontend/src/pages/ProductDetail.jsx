@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Package, ShieldCheck, MessageCircle, Phone , LucideRulerDimensionLine, LucidePencilRuler, Loader2} from "lucide-react";
+import { ArrowLeft, Star, Package, ShieldCheck, MessageCircle, Phone , LucideRulerDimensionLine, LucidePencilRuler} from "lucide-react";
 import { getProductBySlug, getProducts } from "../services/products";
 import { formatXOF } from "../lib/format";
 import ProfitCalculator from "../components/products/ProfitCalculator";
 import ProductCard from "../components/products/ProductCard";
+import ProductCardSkeleton from "../components/products/ProductCardSkeleton";
+import ProductDetailSkeleton from "../components/products/ProductDetailSkeleton";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -35,11 +37,7 @@ export default function ProductDetail() {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex justify-center">
-        <Loader2 size={32} className="animate-spin text-[#B8941E]" />
-      </div>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (error || !product) return <Navigate to="/catalogue" replace />;

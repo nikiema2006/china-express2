@@ -30,6 +30,9 @@ CREATE TABLE products (
   trending BOOLEAN NOT NULL DEFAULT false,
   status TEXT NOT NULL DEFAULT 'draft',
   product_url TEXT,
+  volume_per_lot NUMERIC,
+  lot_size INTEGER,
+  shipping_note TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

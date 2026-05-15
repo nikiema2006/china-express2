@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TrendingUp, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, TrendingUp, Sparkles } from "lucide-react";
 import { getTrendingProducts } from "../../services/products";
 import { formatXOF } from "../../lib/format";
+import HeroSkeleton from "./HeroSkeleton";
 
 export default function HeroCarousel() {
   const [slides, setSlides] = useState([]);
@@ -31,11 +32,7 @@ export default function HeroCarousel() {
   }, [slides.length]);
 
   if (loading || slides.length === 0) {
-    return (
-      <section className="relative overflow-hidden h-[78vh] min-h-[540px] md:h-[88vh] md:min-h-[620px] bg-[#FDFBF7] flex items-center justify-center">
-        <Loader2 size={32} className="animate-spin text-[#B8941E]" />
-      </section>
-    );
+    return <HeroSkeleton />;
   }
 
   const current = slides[index];
@@ -72,7 +69,7 @@ export default function HeroCarousel() {
             alt={current.name}
             className="w-full h-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FDFBF7] via-[#FDFBF7]/40 to-[#FDFBF7]/30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#FDFBF7] via-[#FDFBF7]/0 to-[#FDFBF7]/0" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#FDFBF7] via-transparent to-transparent" />
         </motion.div>
       </AnimatePresence>

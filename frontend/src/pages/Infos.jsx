@@ -89,19 +89,19 @@ export default function Infos() {
               <tr className="border-b border-[#1A1515]/8">
                 <td className="py-4 px-3 font-display">Maritime</td>
                 <td className="py-4 px-3 font-mono">45–60 jours</td>
-                <td className="py-4 px-3 font-mono text-[#1F6B23]">En fonction des dimensions du colis</td>
+                <td className="py-4 px-3 font-mono text-[#1F6B23]">235 000 FCFA/CBM</td>
                 <td className="py-4 px-3 text-[#5C5854]">Gros volumes, meubles, conteneurs</td>
               </tr>
               <tr className="border-b border-[#1A1515]/8 bg-[#B8941E]/5">
                 <td className="py-4 px-3 font-display text-[#B8941E]">Aérien Standard ★</td>
                 <td className="py-4 px-3 font-mono">12–18 jours</td>
-                <td className="py-4 px-3 font-mono text-[#B8941E]">9000 FCFA/kg ou 12 000 FCFA/kg</td>
-                <td className="py-4 px-3 text-[#5C5854]">Le bon compromis pour la majorité des commandes, et petits colis. Les frais de transport varie en fonction du type de produits</td>
+                <td className="py-4 px-3 font-mono text-[#B8941E]">12 000 FCFA/kg</td>
+                <td className="py-4 px-3 text-[#5C5854]">Le bon compromis pour la majorité des commandes et petits colis</td>
               </tr>
               <tr>
                 <td className="py-4 px-3 font-display">Aérien Express</td>
                 <td className="py-4 px-3 font-mono">5–8 jours</td>
-                <td className="py-4 px-3 font-mono text-[#A8141B]">Variable</td>
+                <td className="py-4 px-3 font-mono text-[#A8141B]">14 000 FCFA/kg</td>
                 <td className="py-4 px-3 text-[#5C5854]">Échantillons, urgences, petits colis</td>
               </tr>
             </tbody>

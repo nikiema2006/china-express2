@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, ShieldCheck, MessageCircle, Sparkles, Headphones, Shirt, Home as HomeIcon, Sparkle, Wrench, Loader2 } from "lucide-react";
+import { ArrowRight, ShieldCheck, MessageCircle, Sparkles, Headphones, Shirt, Home as HomeIcon, Sparkle, Wrench } from "lucide-react";
 import HeroCarousel from "../components/home/HeroCarousel";
 import ProductCard from "../components/products/ProductCard";
+import ProductCardSkeleton from "../components/products/ProductCardSkeleton";
 import { getTrendingProducts, CATEGORIES } from "../services/products";
 
 const CAT_ICONS = {
@@ -131,8 +132,10 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-[#B8941E]" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
           </div>
         ) : (
           <>
