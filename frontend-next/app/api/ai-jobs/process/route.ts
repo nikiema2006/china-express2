@@ -81,16 +81,15 @@ async function callKimiAPI(imageBase64s: string[], url: string = '') {
 }
 
 async function importProductToSupabase(product: any) {
+  const productData = {
+    ...product,
+    status: 'draft',
+    created_at: new Date().toISOString(),
+  };
+
   const { data, error } = await supabase
     .from('products')
-    .insert([
-      {
-        ...product,
-        status: 'draft',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ])
+    .insert([productData])
     .select()
     .single();
 
