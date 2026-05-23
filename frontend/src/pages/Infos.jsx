@@ -95,7 +95,7 @@ export default function Infos() {
               <tr className="border-b border-[#1A1515]/8 bg-[#B8941E]/5">
                 <td className="py-4 px-3 font-display text-[#B8941E]">Aérien Standard ★</td>
                 <td className="py-4 px-3 font-mono">12–18 jours</td>
-                <td className="py-4 px-3 font-mono text-[#B8941E]">12 000 FCFA/kg</td>
+                <td className="py-4 px-3 font-mono text-[#B8941E]">10 000–12 000 FCFA/kg</td>
                 <td className="py-4 px-3 text-[#5C5854]">Le bon compromis pour la majorité des commandes et petits colis</td>
               </tr>
               <tr>
