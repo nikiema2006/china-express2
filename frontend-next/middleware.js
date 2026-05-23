@@ -4,11 +4,23 @@ export async function middleware(request) {
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/admin');
   const isLoginPage = request.nextUrl.pathname === '/admin/login';
 
-  // Check for Supabase auth cookies (they start with 'sb-' and contain 'auth-token')
+  // Check for Supabase auth cookies - Supabase sets cookies like:
+  // sb-{project-ref}-auth-token (contains session info)
   let hasSession = false;
   request.cookies.getAll().forEach((cookie) => {
-    if (cookie.name.includes('auth-token')) {
-      hasSession = true;
+    if (cookie.name.includes('auth-token') && cookie.value && cookie.value !== 'null') {
+      try {
+        // Verify it's not empty or malformed
+        const parsed = JSON.parse(decodeURIComponent(cookie.value));
+        if (parsed && parsed.length > 0) {
+          hasSession = true;
+        }
+      } catch {
+        // Cookie might be in a different format, treat as valid if present
+        if (cookie.value.length > 10) {
+          hasSession = true;
+        }
+      }
     }
   });
 
