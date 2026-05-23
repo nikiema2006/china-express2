@@ -154,19 +154,9 @@ const STATUS_FILTERS = [
 ];
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const [activeSection, setActiveSection] = useState('products');
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState(null);
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check auth on mount
   useEffect(() => {
     async function checkAuth() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -180,7 +170,6 @@ export default function AdminDashboard() {
     checkAuth();
   }, []);
 
-  // Listen for auth state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
@@ -190,7 +179,6 @@ export default function AdminDashboard() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show loading while checking auth
   if (!authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F7F5F2]">
@@ -202,6 +190,20 @@ export default function AdminDashboard() {
   if (!isAuthenticated) {
     return null;
   }
+
+  return <AdminDashboardContent />;
+}
+
+function AdminDashboardContent() {
+  const router = useRouter();
+  const [activeSection, setActiveSection] = useState('products');
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const section = SECTIONS[activeSection];
 
