@@ -29,10 +29,8 @@ function LoginForm() {
       if (signInError) throw signInError;
       if (!data.session) throw new Error("No session returned");
 
-      // Use window.location.href to force a full page reload (middleware will re-check cookies)
-      setTimeout(() => {
-        window.location.href = redirect;
-      }, 500);
+      // Force full page reload so cookies are available for subsequent requests
+      window.location.replace(redirect);
     } catch (err) {
       console.error("Login error:", err);
       if (err.message?.includes("Invalid login credentials")) {
