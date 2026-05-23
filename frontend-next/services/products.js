@@ -20,6 +20,7 @@ function mapProduct(p) {
     volumePerLot: p.volume_per_lot ? Number(p.volume_per_lot) : null,
     lotSize: p.lot_size || null,
     shippingNote: p.shipping_note || null,
+    shippingCategory: p.shipping_category || 'MCO',
     rating: Number(p.rating),
     reviews: p.reviews,
     trending: p.trending,

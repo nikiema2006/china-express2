@@ -7,20 +7,33 @@ import { formatXOF, formatPct } from "../../lib/format";
 
 const ICONS = { Ship, Plane, Zap };
 
-const FIXED_RATES = {
-  aerien_std:     { pricePerKg: 12000, mode: "weight" },
-  aerien_exp:     { pricePerKg: 14000, mode: "weight" },
-  aerien_express: { pricePerKg: 14000, mode: "weight" },
-  maritime:       { pricePerCbm: 235000, mode: "volume" },
+const SHIPPING_CATEGORIES = {
+  MCO: { label: 'MCO — Marchandises ordinaires', pricePerKg: 10000, examples: 'Coton, plastique, vêtements' },
+  MCF: { label: 'MCF — Marchandises dangereuses', pricePerKg: 12000, examples: 'Batteries, liquides, parfums' },
+  MCI: { label: 'MCI — Marchandises alimentaires', pricePerKg: 12000, examples: 'Nourriture, produits secs' },
 };
 
-function parseVolumeFromDimensions(dimStr, qty) {
+const PRICE_PER_KG_STANDARD = 10000;
+const PRICE_PER_KG_DANGEROUS = 12000;
+const PRICE_PER_KG_FOOD = 12000;
+const PRICE_PER_CBM_MARITIME = 235000;
+
+function parseUnitVolumeFromDimensions(dimStr) {
+  if (!dimStr) return null;
   const cleaned = dimStr.replace(/cm|mm|m| /gi, "").trim();
   const parts = cleaned.split(/[x×X]/).map(Number);
   if (parts.length !== 3 || parts.some((v) => isNaN(v) || v <= 0)) return null;
   const [L, l, H] = parts;
-  const volumeUnitCbm = (L * l * H) / 1_000_000;
-  return volumeUnitCbm * qty;
+  return (L * l * H) / 1_000_000;
+}
+
+function getPricePerKg(shippingCategory) {
+  switch (shippingCategory) {
+    case 'MCF': return PRICE_PER_KG_DANGEROUS;
+    case 'MCI': return PRICE_PER_KG_FOOD;
+    case 'MCO':
+    default: return PRICE_PER_KG_STANDARD;
+  }
 }
 
 export default function ProfitCalculator({ product }) {
@@ -28,12 +41,16 @@ export default function ProfitCalculator({ product }) {
   const [quantity, setQuantity] = useState(product.minWholesale || 10);
   const [sellPrice, setSellPrice] = useState(product.suggestedSellPrice);
   const [shippingOptions, setShippingOptions] = useState([]);
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     async function fetchShippingOptions() {
       try {
         const data = await getShippingOptions();
         setShippingOptions(data);
+        if (data.length > 0 && !data.find((s) => s.id === transportId)) {
+          setTransportId(data[0].id);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -46,28 +63,35 @@ export default function ProfitCalculator({ product }) {
   }, [product.id, product.suggestedSellPrice]);
 
   const transport = shippingOptions.find((s) => s.id === transportId);
-  const rate = FIXED_RATES[transportId];
-
-  const isMaritime = rate?.mode === "volume";
+  const isMaritime = transport?.icon === "Ship";
   const hasLotInfo = product.volumePerLot && product.lotSize;
+  const unitVolumeCbm = parseUnitVolumeFromDimensions(product.dimensions);
   const isLotMode = isMaritime && hasLotInfo;
+  const isMaritimeUnitMode = isMaritime && !hasLotInfo && unitVolumeCbm !== null;
+  const isMaritimeImpossible = isMaritime && !hasLotInfo && unitVolumeCbm === null;
+
+  const minQuantity = isLotMode ? 1 : (product.minWholesale || 10);
 
   useEffect(() => {
+    if (!transport) return;
     if (isLotMode) {
       setQuantity(1);
+    } else if (isMaritimeUnitMode) {
+      setQuantity(product.minWholesale || 10);
     } else {
       setQuantity(product.minWholesale || 10);
     }
-  }, [transportId, isLotMode, product.id, product.minWholesale, product.volumePerLot, product.lotSize]);
+  }, [transportId, isLotMode, isMaritimeUnitMode, product.id, product.minWholesale, product.volumePerLot, product.lotSize]);
 
   const calc = useMemo(() => {
-    if (!transport || !rate) return null;
+    if (!transport) return null;
 
-    const totalUnits = isLotMode
+    const qty = isLotMode
       ? Math.max(1, Number(quantity) || 1) * (product.lotSize || 1)
       : Math.max(1, Number(quantity) || 0);
-    const qty = totalUnits;
-    const isWholesale = qty >= product.minWholesale;
+
+    // Maritime is always wholesale pricing
+    const isWholesale = isMaritime || qty >= product.minWholesale;
     const unitCost = isWholesale ? product.wholesalePrice : product.retailPrice;
     const productCost = unitCost * qty;
     const totalWeightKg = product.weightKg * qty;
@@ -76,33 +100,32 @@ export default function ProfitCalculator({ product }) {
     let volumeCbm = null;
     let volumeMethod = null;
     let canCalculate = true;
+    let shippingNote = null;
 
-    if (rate.mode === "weight") {
-      shippingCost = rate.pricePerKg * totalWeightKg;
+    if (!isMaritime) {
+      const pricePerKg = getPricePerKg(product.shippingCategory);
+      shippingCost = pricePerKg * totalWeightKg;
+    } else if (isLotMode) {
+      // Priority 1: volume per lot
+      const lots = Math.max(1, Number(quantity) || 1);
+      volumeCbm = lots * product.volumePerLot;
+      volumeMethod = "lot";
+      shippingCost = volumeCbm * PRICE_PER_CBM_MARITIME;
+    } else if (isMaritimeUnitMode) {
+      // Priority 2: volume from dimensions
+      volumeCbm = unitVolumeCbm * qty;
+      volumeMethod = "dimensions";
+      shippingCost = volumeCbm * PRICE_PER_CBM_MARITIME;
     } else {
-      if (hasLotInfo) {
-        const lots = Math.max(1, Number(quantity) || 1);
-        volumeCbm = lots * product.volumePerLot;
-        volumeMethod = "lot";
-        shippingCost = volumeCbm * rate.pricePerCbm;
-      } else if (product.dimensions) {
-        const cbm = parseVolumeFromDimensions(product.dimensions, qty);
-        if (cbm !== null) {
-          volumeCbm = cbm;
-          volumeMethod = "dimensions";
-          shippingCost = cbm * rate.pricePerCbm;
-        } else {
-          canCalculate = false;
-        }
-      } else {
-        canCalculate = false;
-      }
+      // Priority 3: impossible - show contact card
+      canCalculate = false;
+      shippingNote = product.shippingNote || "Le volume est difficile à déterminer pour ce produit. Contactez-nous pour un devis personnalisé.";
     }
 
     if (!canCalculate) {
       return {
         canCalculate: false,
-        shippingNote: product.shippingNote || "Le volume est difficile à déterminer pour ce produit. Contactez-nous pour un devis personnalisé.",
+        shippingNote,
         totalWeightKg,
         qty,
         isWholesale,
@@ -133,11 +156,11 @@ export default function ProfitCalculator({ product }) {
       volumeCbm,
       volumeMethod,
     };
-  }, [quantity, sellPrice, transport, rate, product, isLotMode, hasLotInfo]);
+  }, [quantity, sellPrice, transport, product, isLotMode, isMaritimeUnitMode, isMaritime, product.shippingCategory, unitVolumeCbm, hasLotInfo]);
 
-  if (!calc || !transport || !rate) return null;
+  if (!transport) return null;
 
-  if (!calc.canCalculate) {
+  if (!calc || !calc.canCalculate) {
     return (
       <div
         data-testid="profit-calculator"
@@ -160,21 +183,23 @@ export default function ProfitCalculator({ product }) {
               Volume de transport difficile à déterminer
             </p>
             <p className="text-sm text-[#5C5854] leading-relaxed mb-4">
-              {calc.shippingNote}
+              {calc?.shippingNote}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => setTransportId("aerien_std")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#B8941E]/40 text-[#B8941E] rounded-md font-semibold text-sm hover:bg-[#B8941E]/10 transition-all"
-              >
-                <Plane size={14} /> Aérien Standard
-              </button>
-              <button
-                onClick={() => setTransportId("aerien_exp")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#1A1515]/15 text-[#5C5854] rounded-md font-semibold text-sm hover:border-[#B8941E]/40 hover:text-[#B8941E] transition-all"
-              >
-                <Zap size={14} /> Aérien Express
-              </button>
+              {shippingOptions
+                .filter((opt) => opt.icon !== "Ship" && opt.icon !== "Zap")
+                .map((opt) => {
+                  const Icon = ICONS[opt.icon];
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setTransportId(opt.id)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#B8941E]/40 text-[#B8941E] rounded-md font-semibold text-sm hover:bg-[#B8941E]/10 transition-all"
+                    >
+                      {Icon && <Icon size={14} />} {opt.label}
+                    </button>
+                  );
+                })}
               <a
                 href="https://wa.me/22606900288"
                 target="_blank"
@@ -187,8 +212,8 @@ export default function ProfitCalculator({ product }) {
           </div>
 
           <div className="mt-4 text-xs text-[#8A857F]">
-            <p>Poids total estimé : <span className="font-mono text-[#1A1515]">{calc.totalWeightKg.toFixed(2)} kg</span></p>
-            {calc.qty && (
+            <p>Poids total estimé : <span className="font-mono text-[#1A1515]">{calc?.totalWeightKg.toFixed(2)} kg</span></p>
+            {calc?.qty && (
               <p>Quantité : <span className="font-mono text-[#1A1515]">{calc.qty} unités</span></p>
             )}
           </div>
@@ -206,12 +231,15 @@ export default function ProfitCalculator({ product }) {
 
   const isProfitable = calc.profit > 0;
 
-  const quantityLabel = isLotMode ? `Quantité (lots de ${product.lotSize})` : "Quantité";
+  const quantityLabel = isLotMode
+    ? `Nombre de lots (${product.lotSize} unités/lot)`
+    : "Quantité";
   const quantityHint = isLotMode ? `${calc.qty} unités au total` : null;
+  const quantityPlaceholder = isLotMode ? "Ex: 1, 1.5, 2, 3..." : null;
 
   const volumeMethodLabel = {
     lot: `Volume par lot (${product.volumePerLot} CBM / lot de ${product.lotSize})`,
-    dimensions: `Volume calculé depuis les dimensions (${product.dimensions})`,
+    dimensions: unitVolumeCbm !== null ? `Volume unitaire × ${calc.qty} unités (${unitVolumeCbm.toFixed(4)} CBM / unité)` : "Volume calculé depuis les dimensions",
   };
 
   return (
@@ -232,37 +260,85 @@ export default function ProfitCalculator({ product }) {
             <h3 className="font-display text-2xl text-[#1A1515]">Calculateur de profit</h3>
             <p className="text-sm text-[#5C5854] mt-1">
               Ajuste les variables, vois ta marge en temps réel.
+              {isMaritime && (
+                <span className="block text-[#B8941E] mt-0.5">
+                  Transport maritime — achat en gros uniquement
+                </span>
+              )}
             </p>
           </div>
         </div>
 
         <div className="mb-6">
-          <label className="text-[10px] uppercase tracking-[0.25em] text-[#5C5854] block mb-2.5">
-            Mode de transport
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {shippingOptions.map((opt) => {
-              const Icon = ICONS[opt.icon];
-              const active = opt.id === transportId;
-              return (
-                <button
-                  key={opt.id}
-                  data-testid={`transport-${opt.id}`}
-                  onClick={() => setTransportId(opt.id)}
-                  className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all ${
-                    active
-                      ? "border-[#B8941E] bg-[#B8941E]/8 text-[#B8941E] shadow-[0_0_20px_rgba(212,175,55,0.15)]"
-                      : "border-[#1A1515]/8 bg-[#F5F0E6] text-[#5C5854] hover:border-[#B8941E]/30 hover:text-[#1A1515]"
-                  }`}
-                >
-                  {Icon && <Icon size={18} strokeWidth={1.6} />}
-                  <span className="text-xs font-medium leading-tight text-center">
-                    {opt.label}
-                  </span>
-                  <span className="text-[9px] tracking-wider opacity-70">{opt.estimatedDays}</span>
-                </button>
-              );
-            })}
+          <div className="flex items-center justify-between mb-2.5">
+            <label className="text-[10px] uppercase tracking-[0.25em] text-[#5C5854]">
+              Mode de transport
+            </label>
+            <button
+              onClick={() => setShowInfo(!showInfo)}
+              className="text-[15px] text-[#B8941E] hover:underline flex items-center gap-1"
+            >
+              <AlertCircle color="red" size={14} /> Comment sont calculés les tarifs ?
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showInfo && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4 rounded-lg bg-[#F5F0E6] border border-[#B8941E]/20 p-4 text-xs text-[#5C5854] space-y-3 overflow-hidden"
+              >
+                <div>
+                  <p className="font-semibold text-[#1A1515] mb-1">Transport aérien</p>
+                  <p>Le tarif dépend du <span className="font-medium text-[#1A1515]">type de marchandise</span> :</p>
+                  <ul className="mt-1.5 space-y-1 ml-4 list-disc">
+                    <li><span className="font-medium text-[#1A1515]">MCO</span> (Marchandises ordinaires) — Coton, plastique, vêtements : <span className="font-mono text-[#B8941E]">10 000 FCFA/kg</span></li>
+                    <li><span className="font-medium text-[#1A1515]">MCF</span> (Marchandises dangereuses) — Batteries, liquides, parfums : <span className="font-mono text-[#B8941E]">12 000 FCFA/kg</span></li>
+                    <li><span className="font-medium text-[#1A1515]">MCI</span> (Marchandises alimentaires) — Nourriture, produits secs : <span className="font-mono text-[#B8941E]">12 000 FCFA/kg</span></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-semibold text-[#1A1515] mb-1">Transport maritime</p>
+                  <p>Calculé au <span className="font-medium text-[#1A1515]">volume (CBM)</span> : <span className="font-mono text-[#B8941E]">235 000 FCFA/m³</span></p>
+                  <p className="text-[#8A857F] mt-1">Priorité : volume par lot → volume depuis les dimensions → devis personnalisé.</p>
+                  {isMaritime && (
+                    <p className="text-[#B8941E] mt-1 font-medium">Achat en gros uniquement ({product.minWholesale} unités minimum).</p>
+                  )}
+                </div>
+                <div className="pt-2 border-t border-[#1A1515]/8">
+                  <p className="text-[#8A857F] italic">Ce produit est classé : <span className="font-medium text-[#1A1515]">{product.shippingCategory}</span> ({SHIPPING_CATEGORIES[product.shippingCategory]?.label || 'N/A'})</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="grid grid-cols-2 gap-2">
+            {shippingOptions
+              .filter((opt) => opt.icon !== "Zap")
+              .map((opt) => {
+                const Icon = ICONS[opt.icon];
+                const active = opt.id === transportId;
+                return (
+                  <button
+                    key={opt.id}
+                    data-testid={`transport-${opt.id}`}
+                    onClick={() => setTransportId(opt.id)}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border transition-all ${
+                      active
+                        ? "border-[#B8941E] bg-[#B8941E]/8 text-[#B8941E] shadow-[0_0_20px_rgba(212,175,55,0.15)]"
+                        : "border-[#1A1515]/8 bg-[#F5F0E6] text-[#5C5854] hover:border-[#B8941E]/30 hover:text-[#1A1515]"
+                    }`}
+                  >
+                    {Icon && <Icon size={18} strokeWidth={1.6} />}
+                    <span className="text-xs font-medium leading-tight text-center">
+                      {opt.label}
+                    </span>
+                    <span className="text-[9px] tracking-wider opacity-70">{opt.estimatedDays}</span>
+                  </button>
+                );
+              })}
           </div>
         </div>
 
@@ -270,7 +346,12 @@ export default function ProfitCalculator({ product }) {
           <div>
             <label className="text-[10px] uppercase tracking-[0.25em] text-[#5C5854] block mb-2">
               {quantityLabel}
-              {calc.isWholesale && (
+              {isMaritime && (
+                <span className="ml-2 text-[#B8941E] normal-case tracking-normal">
+                  · gros uniquement
+                </span>
+              )}
+              {!isMaritime && calc.isWholesale && (
                 <span className="ml-2 text-[#B8941E] normal-case tracking-normal">
                   · prix gros activé
                 </span>
@@ -278,10 +359,15 @@ export default function ProfitCalculator({ product }) {
             </label>
             <input
               type="number"
-              min={1}
+              min={minQuantity}
+              step={isLotMode ? 0.5 : 1}
+              placeholder={quantityPlaceholder}
               data-testid="calc-quantity-input"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              onChange={(e) => {
+                const val = Math.max(minQuantity, Number(e.target.value) || minQuantity);
+                setQuantity(val);
+              }}
               className="w-full bg-[#F5F0E6] border border-[#B8941E]/25 rounded-lg px-4 py-3 font-mono text-lg text-[#1A1515] focus:border-[#B8941E] focus:outline-none transition-colors"
             />
             {quantityHint && (
@@ -290,7 +376,7 @@ export default function ProfitCalculator({ product }) {
             {!isLotMode && (
               <div className="flex gap-2 mt-2 flex-wrap">
                 {Array.from(
-                  new Set([product.minRetail, product.minWholesale, product.minWholesale * 2, product.minWholesale * 5])
+                  new Set([product.minWholesale, product.minWholesale * 2, product.minWholesale * 5, product.minWholesale * 10])
                 ).map((q) => (
                   <button
                     key={q}
@@ -299,6 +385,20 @@ export default function ProfitCalculator({ product }) {
                     className="text-[11px] px-2.5 py-1 rounded-md border border-[#1A1515]/10 text-[#5C5854] hover:border-[#B8941E]/40 hover:text-[#B8941E] transition-colors"
                   >
                     {q}
+                  </button>
+                ))}
+              </div>
+            )}
+            {isLotMode && (
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {[1, 1.5, 2, 3, 5, 10].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setQuantity(q)}
+                    data-testid={`calc-lot-preset-${q}`}
+                    className="text-[11px] px-2.5 py-1 rounded-md border border-[#1A1515]/10 text-[#5C5854] hover:border-[#B8941E]/40 hover:text-[#B8941E] transition-colors"
+                  >
+                    {q} {q === 1 ? 'lot' : 'lots'}
                   </button>
                 ))}
               </div>

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, Ship, MapPin, HelpCircle, ListOrdered, Loader2,
-  Search, ArrowLeft, Sparkles, Check, EyeOff,
+  Search, ArrowLeft, Sparkles, Check, EyeOff, LogOut,
 } from 'lucide-react';
 import { adminService } from '@/services/admin';
 import { supabase } from '@/lib/supabase';
+import { signOut } from '@/lib/auth';
 import CrudTable from '@/components/admin/CrudTable';
 import ProductForm from '@/components/admin/ProductForm';
 import AIProductImport from '@/components/admin/AIProductImport';
@@ -48,6 +50,7 @@ const SECTIONS = {
       { key: 'volume_per_lot', label: 'Volume per Lot (CBM)', type: 'number' },
       { key: 'lot_size', label: 'Lot Size (units)', type: 'number' },
       { key: 'shipping_note', label: 'Shipping Note', type: 'textarea' },
+      { key: 'shipping_category', label: 'Shipping Category', type: 'select', options: [{ value: 'MCO', label: 'MCO — Ordinaire (10 000 FCFA/kg)' }, { value: 'MCF', label: 'MCF — Dangereux (12 000 FCFA/kg)' }, { value: 'MCI', label: 'MCI — Alimentaire (12 000 FCFA/kg)' }] },
       { key: 'rating', label: 'Rating', type: 'number' },
       { key: 'reviews', label: 'Reviews', type: 'number' },
       { key: 'trending', label: 'Trending', type: 'boolean' },
@@ -151,6 +154,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState('products');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -334,6 +338,11 @@ export default function AdminDashboard() {
     });
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    router.push('/admin/login');
+  };
+
   return (
     <div className="min-h-screen bg-[#F7F5F2]">
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#B8941E]/15">
@@ -362,6 +371,14 @@ export default function AdminDashboard() {
           >
             View Site
           </Link>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3 py-2 rounded-md border border-[#C8102E]/20 text-[#5C5854] hover:border-[#C8102E]/40 hover:text-[#C8102E] transition-all text-sm"
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">Déconnexion</span>
+          </button>
         </div>
       </header>
 
