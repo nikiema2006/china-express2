@@ -50,14 +50,14 @@ export default function ProductDetailClient({ product, related }) {
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
             {product.images.map((img, i) => (
               <button
                 key={img}
                 onClick={() => setActiveImage(i)}
                 data-testid={`product-thumb-${i}`}
-                className={`flex-1 aspect-square rounded-lg overflow-hidden border transition-all ${
-                  i === activeImage ? "border-[#B8941E]" : "border-[#1A1515]/8 opacity-60 hover:opacity-100"
+                className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all snap-start ${
+                  i === activeImage ? "border-[#B8941E] ring-2 ring-[#B8941E]/20" : "border-transparent opacity-60 hover:opacity-100"
                 }`}
               >
                 <img src={img} alt={`thumb-${i}`} className="w-full h-full object-cover" />
