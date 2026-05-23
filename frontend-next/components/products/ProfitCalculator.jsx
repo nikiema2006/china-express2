@@ -8,9 +8,10 @@ import { formatXOF, formatPct } from "../../lib/format";
 const ICONS = { Ship, Plane, Zap };
 
 const FIXED_RATES = {
-  aerien_std: { pricePerKg: 12000, mode: "weight" },
-  aerien_exp: { pricePerKg: 14000, mode: "weight" },
-  maritime:   { pricePerCbm: 235000, mode: "volume" },
+  aerien_std:     { pricePerKg: 12000, mode: "weight" },
+  aerien_exp:     { pricePerKg: 14000, mode: "weight" },
+  aerien_express: { pricePerKg: 14000, mode: "weight" },
+  maritime:       { pricePerCbm: 235000, mode: "volume" },
 };
 
 function parseVolumeFromDimensions(dimStr, qty) {
