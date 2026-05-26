@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import ProductDetailClient from "./ProductDetailClient";
-import { getProductBySlug, getProducts } from "@/services/products";
+import { getProductBySlug, getRelatedProducts } from "@/services/products";
+
+export const revalidate = 300;
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -48,10 +50,7 @@ export default async function ProductDetailPage({ params }) {
 
   try {
     const product = await getProductBySlug(slug);
-    const allProducts = await getProducts();
-    const relatedProducts = allProducts
-      .filter((p) => p.id !== product.id && p.category === product.category)
-      .slice(0, 4);
+    const relatedProducts = await getRelatedProducts(product.id, product.category, 4);
 
     return <ProductDetailClient product={product} related={relatedProducts} />;
   } catch (error) {

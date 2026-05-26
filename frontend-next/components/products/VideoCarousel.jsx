@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 
 const GOLD = '#B8941E';
 const DARK = '#1A1515';
@@ -57,37 +57,26 @@ function getEmbedUrl(video) {
 export default function VideoCarousel({ videoLinks }) {
   const videos = parseVideoLinks(videoLinks);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [activeDot, setActiveDot] = useState(0);
   const scrollRef = useRef(null);
 
-  const canScroll = videos.length > 3;
   const hasVideos = videos.length > 0;
 
-  const scroll = (direction) => {
+  const handleScroll = () => {
     const container = scrollRef.current;
     if (!container) return;
-    const scrollAmount = container.clientWidth * 0.6;
-    container.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
+    const scrollLeft = container.scrollLeft;
+    const cardWidth = 176; // 160px + 16px gap
+    const index = Math.round(scrollLeft / cardWidth);
+    setActiveDot(index);
   };
 
   return (
     <>
       <div className="relative">
-        {canScroll && (
-          <button
-            onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
-            style={{ backgroundColor: GOLD, color: CREAM }}
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={24} />
-          </button>
-        )}
-
         <div
           ref={scrollRef}
+          onScroll={handleScroll}
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide px-2 py-4"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
@@ -179,15 +168,33 @@ export default function VideoCarousel({ videoLinks }) {
           )}
         </div>
 
-        {canScroll && (
-          <button
-            onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
-            style={{ backgroundColor: GOLD, color: CREAM }}
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={24} />
-          </button>
+        {/* Navigation dots */}
+        {hasVideos && videos.length > 1 && (
+          <div className="flex items-center justify-center gap-2 py-3">
+            {videos.map((_, i) => (
+              <button
+                key={`dot-${i}`}
+                onClick={() => {
+                  const container = scrollRef.current;
+                  if (!container) return;
+                  const cardWidth = 176;
+                  container.scrollTo({ left: i * cardWidth, behavior: 'smooth' });
+                  setActiveDot(i);
+                }}
+                className="transition-all duration-300"
+                aria-label={`Go to slide ${i + 1}`}
+              >
+                <div
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width: i === activeDot ? '24px' : '8px',
+                    height: '8px',
+                    backgroundColor: i === activeDot ? GOLD : `${CREAM}40`,
+                  }}
+                />
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
