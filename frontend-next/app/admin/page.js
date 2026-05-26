@@ -51,6 +51,7 @@ const SECTIONS = {
       { key: 'lot_size', label: 'Lot Size (units)', type: 'number' },
       { key: 'shipping_note', label: 'Shipping Note', type: 'textarea' },
       { key: 'shipping_category', label: 'Shipping Category', type: 'select', options: [{ value: 'MCO', label: 'MCO — Ordinaire (10 000 FCFA/kg)' }, { value: 'MCF', label: 'MCF — Dangereux (12 000 FCFA/kg)' }, { value: 'MCI', label: 'MCI — Alimentaire (12 000 FCFA/kg)' }] },
+      { key: 'video_links', label: 'Video Links (comma-separated)', type: 'textarea' },
       { key: 'rating', label: 'Rating', type: 'number' },
       { key: 'reviews', label: 'Reviews', type: 'number' },
       { key: 'trending', label: 'Trending', type: 'boolean' },

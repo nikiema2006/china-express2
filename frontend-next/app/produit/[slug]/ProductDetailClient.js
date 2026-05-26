@@ -8,6 +8,7 @@ import { formatXOF } from "@/lib/format";
 import ProfitCalculator from "@/components/products/ProfitCalculator";
 import ProductCard from "@/components/products/ProductCard";
 import ProductDetailSkeleton from "@/components/products/ProductDetailSkeleton";
+import VideoCarousel from "@/components/products/VideoCarousel";
 
 export default function ProductDetailClient({ product, related }) {
   const [activeImage, setActiveImage] = useState(0);
@@ -138,6 +139,10 @@ export default function ProductDetailClient({ product, related }) {
             </a>
           </div>
         </div>
+      </div>
+
+      <div className="mb-16">
+        <VideoCarousel videoLinks={product.videoLinks} />
       </div>
 
       <div className="mb-16">

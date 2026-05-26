@@ -25,6 +25,7 @@ function mapProduct(p) {
     reviews: p.reviews,
     trending: p.trending,
     status: p.status,
+    videoLinks: p.video_links || '',
   };
 }
 

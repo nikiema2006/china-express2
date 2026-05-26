@@ -96,6 +96,9 @@ export default function AIProductImport() {
   };
 
   const subscribeToJob = (job) => {
+    // Prevent double subscription
+    if (subscriptionsRef.current[job.id]) return;
+
     const channel = supabase
       .channel(`ai-job-${job.id}`)
       .on(
