@@ -3,6 +3,25 @@ import Header from "@/components/layout/Header";
 import BottomNav from "@/components/layout/BottomNav";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "sonner";
+import { Fraunces, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-fraunces",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jakarta",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jetbrains",
+});
 
 export const metadata = {
   title: {
@@ -64,13 +83,8 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="min-h-screen flex flex-col bg-[#FDFBF7] text-[#1A1515]">
+    <html lang="fr" className={`${fraunces.variable} ${jakarta.variable} ${jetbrains.variable}`}>
+      <body className="min-h-screen flex flex-col bg-[#FDFBF7] text-[#1A1515] font-sans">
         <Header />
         <main className="flex-1 pb-24 md:pb-0">{children}</main>
         <Footer />

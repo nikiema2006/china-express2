@@ -1,12 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-jakarta), system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: #FDFBF7;
@@ -14,17 +12,17 @@ body {
 }
 
 code, .font-mono {
-    font-family: 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
+    font-family: var(--font-jetbrains), Menlo, Monaco, Consolas, monospace;
 }
 
 .font-display {
-    font-family: 'Fraunces', 'Playfair Display', serif;
+    font-family: var(--font-fraunces), 'Playfair Display', serif;
     font-variation-settings: 'opsz' 80, 'SOFT' 50, 'WONK' 0;
     letter-spacing: -0.02em;
 }
 
 .font-body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: var(--font-jakarta), sans-serif;
 }
 
 @layer base {

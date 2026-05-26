@@ -4,38 +4,16 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, TrendingUp, Sparkles } from "lucide-react";
-import { getTrendingProducts } from "@/services/products";
 import { formatXOF } from "@/lib/format";
-import HeroSkeleton from "./HeroSkeleton";
 
-export default function HeroCarousel() {
-  const [slides, setSlides] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function HeroCarousel({ slides }) {
   const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    async function fetchSlides() {
-      try {
-        const data = await getTrendingProducts();
-        setSlides(data.slice(0, 4));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSlides();
-  }, []);
 
   useEffect(() => {
     if (slides.length <= 1) return;
     const id = setInterval(() => setIndex((prev) => (prev + 1) % slides.length), 5500);
     return () => clearInterval(id);
   }, [slides.length]);
-
-  if (loading || slides.length === 0) {
-    return <HeroSkeleton />;
-  }
 
   const current = slides[index];
 

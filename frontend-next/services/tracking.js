@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 export async function getTrackingByCode(code) {
   const { data, error } = await supabase
     .from('trackings')
-    .select('id, code, status, updated_at')
+    .select('*')
     .eq('code', code.toUpperCase())
     .single();
   if (error) throw error;

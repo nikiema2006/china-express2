@@ -8,33 +8,9 @@ import { getFAQs, getHowItWorks } from "@/services/content";
 
 const ICONS = { Link2, Handshake, Send, PackageCheck };
 
-export default function InfosClient() {
-  const [faqs, setFaqs] = useState([]);
-  const [howItWorks, setHowItWorks] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [faqsData, howData] = await Promise.all([getFAQs(), getHowItWorks()]);
-        setFaqs(faqsData);
-        setHowItWorks(howData);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex justify-center">
-        <Loader2 size={32} className="animate-spin text-[#B8941E]" />
-      </div>
-    );
-  }
+export default function InfosClient({ initialFaqs, initialHowItWorks }) {
+  const faqs = initialFaqs || [];
+  const howItWorks = initialHowItWorks || [];
 
   return (
     <div data-testid="infos-page" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-14">
