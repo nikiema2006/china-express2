@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Star, Package, ShieldCheck, MessageCircle, Phone, LucideRulerDimensionLine } from "lucide-react";
+import { ArrowLeft, Star, Package, ShieldCheck, MessageCircle, Phone, LucideRulerDimensionLine, Share2 } from "lucide-react";
 import { formatXOF } from "@/lib/format";
 import ProfitCalculator from "@/components/products/ProfitCalculator";
 import ProductCard from "@/components/products/ProductCard";
@@ -13,10 +13,35 @@ import VideoCarousel from "@/components/products/VideoCarousel";
 export default function ProductDetailClient({ product, related }) {
   const [activeImage, setActiveImage] = useState(0);
   const [loading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (loading) {
     return <ProductDetailSkeleton />;
   }
+
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const productUrl = `${siteUrl}/produit/${product.slug}`;
+  
+  const whatsappMessage = encodeURIComponent(
+    `Bonjour, je suis interesse par ce produit :\n\n` +
+    `Produit : ${product.name}\n` +
+    `Lien : ${productUrl}\n\n` +
+    `Prix detail : ${formatXOF(product.retailPrice)}\n` +
+    `Prix gros : ${formatXOF(product.wholesalePrice)} (des ${product.minWholesale} unites)\n\n` +
+    `Merci de me donner plus d'informations sur la commande.`
+  );
+  
+  const whatsappUrl = `https://wa.me/22606900288?text=${whatsappMessage}`;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(productUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Échec de la copie:", err);
+    }
+  };
 
   return (
     <div data-testid="product-detail-page" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-10">
@@ -122,7 +147,7 @@ export default function ProductDetailClient({ product, related }) {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <a
-              href="https://wa.me/22606900288"
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               data-testid="product-order-cta"
@@ -130,13 +155,14 @@ export default function ProductDetailClient({ product, related }) {
             >
               <MessageCircle size={16} /> Commander sur WhatsApp
             </a>
-            <a
-              href="tel:+22606900288"
-              data-testid="product-call-cta"
-              className="inline-flex items-center justify-center gap-2 px-7 py-4 border border-[#B8941E] text-[#B8941E] rounded-md font-semibold hover:bg-[#B8941E]/10 transition-all text-sm uppercase tracking-wider"
+            <button
+              onClick={handleCopyLink}
+              data-testid="product-copy-link"
+              className="inline-flex items-center justify-center gap-2 px-5 py-4 border border-[#1A1515]/15 text-[#5C5854] rounded-md font-semibold hover:border-[#B8941E]/40 hover:text-[#B8941E] transition-all text-sm"
             >
-              <Phone size={16} /> Appeler
-            </a>
+              <Share2 size={16} />
+              {copied ? "Copié !" : "Copier le lien"}
+            </button>
           </div>
         </div>
       </div>
